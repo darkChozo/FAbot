@@ -1,8 +1,8 @@
-import discord;
-import threading;
-import logging;
-import datetime;
-import pytz;
+import discord
+import threading
+import logging
+import datetime
+import pytz
 import ConfigParser
 
 logging.basicConfig()
@@ -10,8 +10,8 @@ logging.basicConfig()
 config = ConfigParser.RawConfigParser()
 config.read("config.ini")
 
-client = discord.Client();
-client.login(config.get("Config","email"),config.get("Config","password"));
+client = discord.Client()
+client.login(config.get("Config","email"),config.get("Config","password"))
 
 if not client.is_logged_in:
     print('Logging in to Discord failed')
@@ -20,11 +20,11 @@ if not client.is_logged_in:
 utc = pytz.utc
 
 class EventManager :
-	events = (("The Folk ARPS Sunday Session", 6, 17, 20), ("The Folk ARPS Tuesday Session", 1, 17, 20))
+	events = (("The Folk ARPS Sunday Session", 6, 19, 20), ("The Folk ARPS Tuesday Session", 1, 19, 20))
 	warnings = ((" starts in five hours!", datetime.timedelta(hours=5)),(" starts in two hours!", datetime.timedelta(hours=2)),(" starts in thirty minutes!",datetime.timedelta(minutes=30)),(" is starting!", datetime.timedelta(0)))
 	timezone = pytz.timezone("Europe/London")
-	nextEvent = None;
-	timer = None;
+	nextEvent = None
+	timer = None
 	channels = ["107862710267453440"]
 	
 	def handleMessage(self, client) :
@@ -33,8 +33,8 @@ class EventManager :
 			if (self.nextEvent is not None) :
 				for warning in self.warnings :
 					if (self.nextEvent[1] - warning[1] > utc.localize(datetime.datetime.utcnow())) :
-						seconds = (self.nextEvent[1] - warning[1] - utc.localize(datetime.datetime.utcnow())).total_seconds();
-						self.timer = threading.Timer(seconds, self.handleTimer, args=[client, self.nextEvent[0] + warning[0]])
+						seconds = (self.nextEvent[1] - warning[1] - utc.localize(datetime.datetime.utcnow())).total_seconds()
+						self.timer = threading.Timer(seconds, self.handleTimer, args=[client, "@everyone " + self.nextEvent[0] + warning[0]])
 						self.timer.start()
 						print "created " + str(seconds) + "s timer for " + str(self.nextEvent)
 						break
@@ -71,17 +71,20 @@ def on_ready():
 @client.event
 def on_message(message):
 	manager.handleMessage(client)
-	if (message.content == "!status") :
+	content = message.content.lower();
+	if (content == "!status") :
 		client.send_message(message.channel, "Working. Probably.")
-	if (message.content == "!nextevent") :
+	if (content == "!nextevent") :
 		client.send_message(message.channel, "Next event is " + manager.nextEvent[0] + " at " + str(manager.nextEvent[1]))
-	if (message.content == "!armaserver") :
+	if (content == "!armaserver") :
 		client.send_message(message.channel, "server.folkarps.com:2702")
-	if (message.content == "!testserver") :
+	if (content == "!testserver") :
 		client.send_message(message.channel, "server.folkarps.com:2722")
-	if (message.content == "!tsserver") :
+	if (content == "!tsserver") :
 		client.send_message(message.channel, "server.folkarps.com:9988")
-	if (message.content == "!help") :
-		client.send_message(message.channel, "Available commands: !armaserver, !testserver, !tsserver, !nextevent, !status")
+	if (content == "!github") :
+		client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
+	if (content == "!help") :
+		client.send_message(message.channel, "Available commands: !armaserver, !testserver, !tsserver, !nextevent, !github, !status")
 
 client.run()
