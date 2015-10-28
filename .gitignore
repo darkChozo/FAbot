@@ -1,1 +1,6 @@
 config.ini
+.venv/
+.idea/
+FAbot.egg-info/
+build/
+dist/

@@ -1,0 +1,3 @@
+If you're using virtualenv (you should) create it in subfolder .venv (it's gitignored).
+To install (should take care of dependencies):
+    python setup.py develop
