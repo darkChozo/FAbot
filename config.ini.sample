@@ -1,5 +1,11 @@
 [Config]
 email:fa_bot@example.com
 password:pass
-channelwhitelist:
-;channelwhitelist:107862710267453440,108326959460663296
+
+channel_whitelist:[]
+;channel_whitelist:["107862710267453440","108326959460663296"]
+
+arma_server_ip:91.121.223.212
+arma_server_port:2703
+insurgency_server_ip:91.121.223.212
+insurgency_server_port:27015

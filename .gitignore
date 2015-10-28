@@ -1,3 +1,9 @@
 config.ini
 config.ini.md
 .ropeproject
+
+.venv/
+.idea/
+FAbot.egg-info/
+build/
+dist/

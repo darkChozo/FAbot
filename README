@@ -1,0 +1,18 @@
+CONFIG:
+Copy file config.ini.sample and rename duplicate to config.ini
+Inside config file, fill out email and password, and if you want to test on your own server, change channels.
+
+INSTALLATION:
+If you're using virtualenv (you should) create it in subfolder .venv (it's gitignored).
+To install (should take care of dependencies):
+    python setup.py develop
+
+DEVELOPMENT:
+To add new commands, you'll need to edit two places: "class Commands" and "def on_message"
+
+Commands is a helper class, that keeps all available commands. Why is that important? Because it helps you not to worry about !help command!
+Just add new command to it with code like
+    foo = Command('!foo', '!foo *bar*')
+First parameter is command user has to type, and second one (optional) will show up instead of the command when !help is printed.
+
+on_message is the place where you'll be adding new stuff.
