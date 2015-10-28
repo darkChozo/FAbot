@@ -117,6 +117,11 @@ class EventManager :
         info = self.insurgencyServer.get_info()
         return info
 
+    def get_raw_in_info(self):
+        self.insurgencyServer.request(valve.source.a2s.messages.InfoRequest())
+        rawMsg = self.insurgencyServer.get_response()
+        return filter(lambda x: x in string.printable, rawMsg)
+
 manager = EventManager()
 
 @client.event
@@ -160,6 +165,9 @@ def on_message(message):
     if (content == "!insurgency") :
         info = manager.in_info()
         client.send_message(message.channel, "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}".format(**info))
+    if (content == "!test") :
+        msg = manager.get_raw_in_info()
+        client.send_message(message.channel, msg)
 
     bikimatch = bikiregex.match(message.content)
     if (bikimatch is not None) :
