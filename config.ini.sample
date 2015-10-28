@@ -1,3 +1,5 @@
 [Config]
 email:fa_bot@example.com
 password:pass
+channelwhitelist:
+;channelwhitelist:107862710267453440,108326959460663296

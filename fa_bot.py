@@ -24,6 +24,9 @@ if not client.is_logged_in:
 
 utc = pytz.utc
 bikiregex = re.compile("^(?i)!biki ((\w)*)$")
+channelwhitelist = config.get("Config","channelwhitelist").replace(" ","").split(",")
+if (channelwhitelist[0] == '') :
+    channelwhitelist = []
 
 class EventManager :
     events = (("The Folk ARPS Sunday Session", 6, 19, 20), ("The Folk ARPS Tuesday Session", 1, 19, 20))
@@ -132,6 +135,8 @@ def on_ready():
 
 @client.event
 def on_message(message):
+    if (len(channelwhitelist) != 0 and message.channel.id not in channelwhitelist) :
+        return
     manager.handleMessage(client)
     content = message.content.lower()
     if (content == "!help") :
