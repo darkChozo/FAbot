@@ -7,7 +7,8 @@ import datetime
 import pytz
 import ConfigParser
 import valve.source.a2s
-
+import re
+import string
 
 logging.basicConfig()
 
@@ -32,6 +33,19 @@ class EventManager :
     channels = ["107862710267453440"]
     server = valve.source.a2s.ServerQuerier(('91.121.223.212', 2703))
     insurgencyServer = valve.source.a2s.ServerQuerier(('91.121.223.212', 27015))
+
+    gamestate = {
+        -1: "No Answer",
+        1: "Server Empty / Mission Screen",
+        3: "Lobby Waiting",
+        5: "Loading Mission",
+        6: "Briefing Screen",
+        7: "In Progress",
+        9: "Debriefing Screen",
+        12: "Setting up",
+        13: "Briefing",
+        14: "Playing"
+    }
 
     def handleMessage(self, client) :
         if (self.timer is None) :
@@ -81,6 +95,23 @@ class EventManager :
         ping = self.server.ping()
         return ping
 
+    def state(self):
+        # python-valve doesn't support the extended data field in the info
+        # request message yet, so we have to do this by hand.
+        # raw message looks like this:
+        # IFolk ARPSAltisArma3fa3_a60_gamey_mission_v7@dw1.52.132676
+        # bf,r152,n0,s1,i1,mf,lf,vt,dt,ttdm,g65545,hd12ce14a,c4194303-4194303,f0,pw,e0,j0,k0,
+
+        self.server.request(valve.source.a2s.messages.InfoRequest())
+        rawMsg = self.server.get_response()
+        msg = filter(lambda x: x in string.printable, rawMsg)
+
+        regex = re.compile(".*,s(?P<serverstate>\d*),.*,t(?P<gametype>\w*),.*")
+
+        m = regex.search(msg,re.DOTALL)
+        s = int(m.group('serverstate'))
+        return [m.group('gametype'), self.gamestate[s]]
+
     def in_info(self):
         info = self.insurgencyServer.get_info()
         return info
@@ -110,24 +141,23 @@ def on_message(message):
     if (content == "!github") :
         client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
     if (content == "!help") :
-        client.send_message(message.channel, "Available commands: !armaserver, !testserver, !tsserver, !nextevent, !github, !status, !ping, !info, !players")
+        client.send_message(message.channel, "Available commands: !armaserver, !testserver, !tsserver, !nextevent, !github, !status, !ping, !info, !players, !insurgency")
     if (content == "!ping") :
         ping = manager.ping()
         client.send_message(message.channel, ping + " milliseconds")
     if (content == "!info") :
         info = manager.info()
-        client.send_message(message.channel, "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}".format(**info))
+        gametype,gamestate = manager.state()
+        client.send_message(message.channel, "Arma 3 v{version} - {server_name} - {game} (".format(**info) + gametype + ") - {player_count}/{max_players} humans, {bot_count} AI on {map} - ".format(**info) + gamestate)
     if (content == "!players") :
         players = manager.players()
         playerString = "Total players: {player_count}\n".format(**players)
         for player in sorted(players["players"], key=lambda p: p["score"], reverse=True):
             playerString += "{score} {name} (on for {duration} seconds)\n".format(**player)
         client.send_message(message.channel, playerString)
-    if (content == "!rules") :
-        rules = manager.rules()
-        client.send_message(message.channel, rules["rule_count"] + " rules")
-        for rule in rules["rules"]:
-            client.send_message(message.channel, rule)
+    if (content == "!state") :
+        gametype,gamestate = manager.state()
+        client.send_message(message.channel, gamestate)
     if (content == "!insurgency") :
         info = manager.in_info()
         client.send_message(message.channel, "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}".format(**info))
