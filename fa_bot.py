@@ -8,14 +8,29 @@ import pytz
 import ConfigParser
 import valve.source.a2s
 import re
+import json
 
 logging.basicConfig()
 
 config = ConfigParser.RawConfigParser()
 config.read("config.ini")
 
+client_email = config.get("Config", "email")
+client_pass = config.get("Config", "password")
+
+channels = json.loads(config.get("Config", "channels"))
+
+arma_server = {
+    'ip': config.get("Config", "arma_server_ip"),
+    'port': int(config.get("Config", "arma_server_port"))
+}
+insurgency_server = {
+    'ip': config.get("Config", "insurgency_server_ip"),
+    'port': int(config.get("Config", "insurgency_server_port"))
+}
+
 client = discord.Client()
-client.login(config.get("Config", "email"), config.get("Config", "password"))
+client.login(client_email, client_pass)
 
 if not client.is_logged_in:
     print('Logging in to Discord failed')
@@ -27,17 +42,18 @@ f3wikiregex = re.compile("^(?i)!f3wiki ((\w)*)$")
 
 
 class EventManager(object):
-    events = (("The Folk ARPS Sunday Session", 6, 19, 20), ("The Folk ARPS Tuesday Session", 1, 19, 20))
-    warnings = (
-        (" starts in five hours!", datetime.timedelta(hours=5)), (" starts in two hours!", datetime.timedelta(hours=2)),
-        (" starts in thirty minutes!", datetime.timedelta(minutes=30)), (" is starting!", datetime.timedelta(0)))
-    timezone = pytz.timezone("Europe/London")
-    nextEvent = None
-    timer = None
-    # channels = ["107862710267453440"]
-    channels = ["103777679739748352"]
-    server = valve.source.a2s.ServerQuerier(('91.121.223.212', 2703))
-    insurgencyServer = valve.source.a2s.ServerQuerier(('91.121.223.212', 27015))
+
+    def __init__(self, channels, arma_server, insurgency_server):
+        self.events = (("The Folk ARPS Sunday Session", 6, 19, 20), ("The Folk ARPS Tuesday Session", 1, 19, 20))
+        self.warnings = (
+            (" starts in five hours!", datetime.timedelta(hours=5)), (" starts in two hours!", datetime.timedelta(hours=2)),
+            (" starts in thirty minutes!", datetime.timedelta(minutes=30)), (" is starting!", datetime.timedelta(0)))
+        self.timezone = pytz.timezone("Europe/London")
+        self.nextEvent = None
+        self.timer = None
+        self.channels = channels
+        self.server = valve.source.a2s.ServerQuerier((arma_server['ip'], arma_server['port']))
+        self.insurgencyServer = valve.source.a2s.ServerQuerier((insurgency_server['ip'], insurgency_server['port']))
 
     def handle_message(self, cli):
         if self.timer is None:
@@ -94,8 +110,7 @@ class EventManager(object):
         info = self.insurgencyServer.get_info()
         return info
 
-
-manager = EventManager()
+manager = EventManager(channels, arma_server, insurgency_server)
 
 
 @client.event
