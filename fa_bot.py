@@ -89,19 +89,29 @@ class EventManager(object):
         info = self.insurgencyServer.get_info()
         return info
 
+
+class Command(object):
+    def __init__(self, command, help_text=None):
+        self.command = command
+        self.help_text = help_text
+
+
 class Commands(object):
-    armaserver = '!armaserver'
-    github = '!github'
-    help = '!help'
-    info = '!info'
-    insurgency = '!insurgency'
-    nextevent = '!nextevent'
-    ping = '!ping'
-    players = '!players'
-    rules = '!rules'
-    status = '!status'
-    testserver = '!testserver'
-    tsserver = '!tsserver'
+    armaserver = Command('!armaserver')
+    biki = Command('!biki', '!biki *pagename*')
+    f3 = Command('!f3')
+    f3wiki = Command('!f3wiki', '!f3wiki *pagename*')
+    github = Command('!github')
+    help = Command('!help')
+    info = Command('!info')
+    insurgency = Command('!insurgency')
+    nextevent = Command('!nextevent')
+    ping = Command('!ping')
+    players = Command('!players')
+    rules = Command('!rules')
+    status = Command('!status')
+    testserver = Command('!testserver')
+    tsserver = Command('!tsserver')
 
 
 if __name__ == "__main__":
@@ -147,61 +157,89 @@ if __name__ == "__main__":
         manager.handle_message(client)
         content = message.content.lower()
 
-        bikimatch = bikiregex.match(message.content)
-        f3wikimatch = f3wikiregex.match(message.content)
-
-        if content == "!status":
+        if content == Commands.status.command:
             client.send_message(message.channel, "Working. Probably.")
-        elif content == "!nextevent":
+
+        elif content == Commands.nextevent.command:
             client.send_message(message.channel,
                                 "Next event is " + manager.nextEvent[0] + " at " + str(manager.nextEvent[1]))
-        elif content == "!armaserver":
+
+        elif content == Commands.armaserver.command:
             client.send_message(message.channel, "server.folkarps.com:2702")
-        elif content == "!testserver":
+
+        elif content == Commands.testserver.command:
             client.send_message(message.channel, "server.folkarps.com:2722")
-        elif content == "!tsserver":
+
+        elif content == Commands.tsserver.command:
             client.send_message(message.channel, "server.folkarps.com:9988")
-        elif content == "!github":
+
+        elif content == Commands.github.command:
             client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
-        elif content == "!ping":
+
+        elif content == Commands.ping.command:
             ping = manager.ping()
             client.send_message(message.channel, str(ping) + " milliseconds")
-        elif content == "!info":
+
+        elif content == Commands.info.command:
             info = manager.info()
             msg = "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
                   " {bot_count} AI on {map}"
             client.send_message(message.channel, msg.format(**info))
-        elif content == "!players":
+
+        elif content == Commands.players.command:
             players = manager.players()
             player_string = "Total players: {player_count}\n".format(**players)
             for player in sorted(players["players"], key=lambda p: p["score"], reverse=True):
                 player_string += "{score} {name} (on for {duration} seconds)\n".format(**player)
             client.send_message(message.channel, player_string)
-        elif content == "!rules":
+
+        elif content == Commands.rules.command:
             rules = manager.rules()
             client.send_message(message.channel, rules["rule_count"] + " rules")
             for rule in rules["rules"]:
                 client.send_message(message.channel, rule)
-        elif content == "!insurgency":
+
+        elif content == Commands.insurgency.command:
             msg = "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
                   " {bot_count} AI on {map}"
             info = manager.in_info()
             client.send_message(message.channel, msg.format(**info))
-        elif content == "!f3":
+
+        elif content == Commands.f3.command:
             client.send_message(
                 message.channel,
                 "Latest F3 downloads: http://ferstaberinde.com/f3/en//index.php?title=Downloads"
             )
-        elif bikimatch is not None:
-            client.send_message(message.channel, "https://community.bistudio.com/wiki?search=" + bikimatch.group(
-                1) + "&title=Special%3ASearch&go=Go")
-        elif f3wikimatch is not None:
-            client.send_message(message.channel,
-                                "http://ferstaberinde.com/f3/en//index.php?search=" + f3wikimatch.group(
-                                    1) + "&title=Special%3ASearch&go=Go")
-        elif content == "!help":
-            msg = "Available commands: !armaserver, !testserver, !tsserver, !nextevent, !github," \
-                  " !status, !ping, !info, !players, !biki *pagename*"
+
+        elif content.startswith(Commands.biki.command):
+            bikimatch = bikiregex.match(message.content)
+            if bikimatch is not None:
+                client.send_message(
+                    message.channel,
+                    "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format(
+                        bikimatch.group(1)
+                    )
+                )
+
+        elif content.startswith(Commands.f3wiki.command):
+            f3wikimatch = f3wikiregex.match(message.content)
+            if f3wikimatch is not None:
+                client.send_message(
+                    message.channel,
+                    "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format(
+                        f3wikimatch.group(1)
+                    )
+                )
+
+        elif content == Commands.help.command:
+            help_texts = []
+            for key, item in Commands.__dict__.items():
+                if not key.startswith('_'):
+                    if item.help_text is not None:
+                        help_texts.append(item.help_text)
+                    else:
+                        help_texts.append(item.command)
+            msg = ', '.join(help_texts)
             client.send_message(message.channel, msg)
 
 
