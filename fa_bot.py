@@ -10,44 +10,23 @@ import valve.source.a2s
 import re
 import json
 
-logging.basicConfig()
-
-config = ConfigParser.RawConfigParser()
-config.read("config.ini")
-
-client_email = config.get("Config", "email")
-client_pass = config.get("Config", "password")
-
-channels = json.loads(config.get("Config", "channels"))
-
-arma_server = {
-    'ip': config.get("Config", "arma_server_ip"),
-    'port': int(config.get("Config", "arma_server_port"))
-}
-insurgency_server = {
-    'ip': config.get("Config", "insurgency_server_ip"),
-    'port': int(config.get("Config", "insurgency_server_port"))
-}
-
-client = discord.Client()
-client.login(client_email, client_pass)
-
-if not client.is_logged_in:
-    print('Logging in to Discord failed')
-    exit(1)
-
 utc = pytz.utc
 bikiregex = re.compile("^(?i)!biki ((\w)*)$")
 f3wikiregex = re.compile("^(?i)!f3wiki ((\w)*)$")
 
 
 class EventManager(object):
-
     def __init__(self, channels, arma_server, insurgency_server):
-        self.events = (("The Folk ARPS Sunday Session", 6, 19, 20), ("The Folk ARPS Tuesday Session", 1, 19, 20))
+        self.events = (
+            ("The Folk ARPS Sunday Session", 6, 19, 20),
+            ("The Folk ARPS Tuesday Session", 1, 19, 20)
+        )
         self.warnings = (
-            (" starts in five hours!", datetime.timedelta(hours=5)), (" starts in two hours!", datetime.timedelta(hours=2)),
-            (" starts in thirty minutes!", datetime.timedelta(minutes=30)), (" is starting!", datetime.timedelta(0)))
+            (" starts in five hours!", datetime.timedelta(hours=5)),
+            (" starts in two hours!", datetime.timedelta(hours=2)),
+            (" starts in thirty minutes!", datetime.timedelta(minutes=30)),
+            (" is starting!", datetime.timedelta(0))
+        )
         self.timezone = pytz.timezone("Europe/London")
         self.nextEvent = None
         self.timer = None
@@ -110,76 +89,103 @@ class EventManager(object):
         info = self.insurgencyServer.get_info()
         return info
 
-manager = EventManager(channels, arma_server, insurgency_server)
+
+if __name__ == "__main__":
+    logging.basicConfig()
+
+    config = ConfigParser.RawConfigParser()
+    config.read("config.ini")
+
+    client_email = config.get("Config", "email")
+    client_pass = config.get("Config", "password")
+
+    manager_channels = json.loads(config.get("Config", "channels"))
+    manager_arma_server = {
+        'ip': config.get("Config", "arma_server_ip"),
+        'port': int(config.get("Config", "arma_server_port"))
+    }
+    manager_insurgency_server = {
+        'ip': config.get("Config", "insurgency_server_ip"),
+        'port': int(config.get("Config", "insurgency_server_port"))
+    }
+    manager = EventManager(manager_channels, manager_arma_server, manager_insurgency_server)
+
+    client = discord.Client()
+    client.login(client_email, client_pass)
+
+    if not client.is_logged_in:
+        print('Logging in to Discord failed')
+        exit(1)
 
 
-@client.event
-def on_ready():
-    print('Connected!')
-    print('Username: ' + client.user.name)
-    print('ID: ' + client.user.id)
+    @client.event
+    def on_ready():
+        print('Connected!')
+        print('Username: ' + client.user.name)
+        print('ID: ' + client.user.id)
 
 
-@client.event
-def on_message(message):
-    manager.handle_message(client)
-    content = message.content.lower()
+    @client.event
+    def on_message(message):
+        manager.handle_message(client)
+        content = message.content.lower()
 
-    bikimatch = bikiregex.match(message.content)
-    f3wikimatch = f3wikiregex.match(message.content)
+        bikimatch = bikiregex.match(message.content)
+        f3wikimatch = f3wikiregex.match(message.content)
 
-    if content == "!status":
-        client.send_message(message.channel, "Working. Probably.")
-    elif content == "!nextevent":
-        client.send_message(message.channel,
-                            "Next event is " + manager.nextEvent[0] + " at " + str(manager.nextEvent[1]))
-    elif content == "!armaserver":
-        client.send_message(message.channel, "server.folkarps.com:2702")
-    elif content == "!testserver":
-        client.send_message(message.channel, "server.folkarps.com:2722")
-    elif content == "!tsserver":
-        client.send_message(message.channel, "server.folkarps.com:9988")
-    elif content == "!github":
-        client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
-    elif content == "!ping":
-        ping = manager.ping()
-        client.send_message(message.channel, str(ping) + " milliseconds")
-    elif content == "!info":
-        info = manager.info()
-        msg = "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
-              " {bot_count} AI on {map}"
-        client.send_message(message.channel, msg.format(**info))
-    elif content == "!players":
-        players = manager.players()
-        player_string = "Total players: {player_count}\n".format(**players)
-        for player in sorted(players["players"], key=lambda p: p["score"], reverse=True):
-            player_string += "{score} {name} (on for {duration} seconds)\n".format(**player)
-        client.send_message(message.channel, player_string)
-    elif content == "!rules":
-        rules = manager.rules()
-        client.send_message(message.channel, rules["rule_count"] + " rules")
-        for rule in rules["rules"]:
-            client.send_message(message.channel, rule)
-    elif content == "!insurgency":
-        msg = "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
-              " {bot_count} AI on {map}"
-        info = manager.in_info()
-        client.send_message(message.channel, msg.format(**info))
-    elif content == "!f3":
-        client.send_message(
-            message.channel,
-            "Latest F3 downloads: http://ferstaberinde.com/f3/en//index.php?title=Downloads"
-        )
-    elif bikimatch is not None:
-        client.send_message(message.channel, "https://community.bistudio.com/wiki?search=" + bikimatch.group(
-            1) + "&title=Special%3ASearch&go=Go")
-    elif f3wikimatch is not None:
-        client.send_message(message.channel, "http://ferstaberinde.com/f3/en//index.php?search=" + f3wikimatch.group(
-            1) + "&title=Special%3ASearch&go=Go")
-    elif content == "!help":
-        msg = "Available commands: !armaserver, !testserver, !tsserver, !nextevent, !github," \
-              " !status, !ping, !info, !players, !biki *pagename*"
-        client.send_message(message.channel, msg)
+        if content == "!status":
+            client.send_message(message.channel, "Working. Probably.")
+        elif content == "!nextevent":
+            client.send_message(message.channel,
+                                "Next event is " + manager.nextEvent[0] + " at " + str(manager.nextEvent[1]))
+        elif content == "!armaserver":
+            client.send_message(message.channel, "server.folkarps.com:2702")
+        elif content == "!testserver":
+            client.send_message(message.channel, "server.folkarps.com:2722")
+        elif content == "!tsserver":
+            client.send_message(message.channel, "server.folkarps.com:9988")
+        elif content == "!github":
+            client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
+        elif content == "!ping":
+            ping = manager.ping()
+            client.send_message(message.channel, str(ping) + " milliseconds")
+        elif content == "!info":
+            info = manager.info()
+            msg = "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
+                  " {bot_count} AI on {map}"
+            client.send_message(message.channel, msg.format(**info))
+        elif content == "!players":
+            players = manager.players()
+            player_string = "Total players: {player_count}\n".format(**players)
+            for player in sorted(players["players"], key=lambda p: p["score"], reverse=True):
+                player_string += "{score} {name} (on for {duration} seconds)\n".format(**player)
+            client.send_message(message.channel, player_string)
+        elif content == "!rules":
+            rules = manager.rules()
+            client.send_message(message.channel, rules["rule_count"] + " rules")
+            for rule in rules["rules"]:
+                client.send_message(message.channel, rule)
+        elif content == "!insurgency":
+            msg = "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
+                  " {bot_count} AI on {map}"
+            info = manager.in_info()
+            client.send_message(message.channel, msg.format(**info))
+        elif content == "!f3":
+            client.send_message(
+                message.channel,
+                "Latest F3 downloads: http://ferstaberinde.com/f3/en//index.php?title=Downloads"
+            )
+        elif bikimatch is not None:
+            client.send_message(message.channel, "https://community.bistudio.com/wiki?search=" + bikimatch.group(
+                1) + "&title=Special%3ASearch&go=Go")
+        elif f3wikimatch is not None:
+            client.send_message(message.channel,
+                                "http://ferstaberinde.com/f3/en//index.php?search=" + f3wikimatch.group(
+                                    1) + "&title=Special%3ASearch&go=Go")
+        elif content == "!help":
+            msg = "Available commands: !armaserver, !testserver, !tsserver, !nextevent, !github," \
+                  " !status, !ping, !info, !players, !biki *pagename*"
+            client.send_message(message.channel, msg)
 
 
-client.run()
+    client.run()
