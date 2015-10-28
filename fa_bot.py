@@ -108,7 +108,7 @@ class EventManager(object):
         self.timezone = pytz.timezone("Europe/London")
         self.nextEvent = None
         self.timer = None
-        self.channels = channels
+        self.channels = announcement_channels
 
     def handle_message(self, cli):
         if self.timer is None:
@@ -182,10 +182,12 @@ if __name__ == "__main__":
     client_email = config.get("Config", "email")
     client_pass = config.get("Config", "password")
 
-    manager_channels = json.loads(config.get("Config", "channel_whitelist"))
+    manager_channels = json.loads(config.get("Config", "announcement_channels"))
     arma_server = ArmaServer(config.get("Config", "arma_server_ip"), int(config.get("Config", "arma_server_port")))
     insurgency_server = InsurgencyServer(config.get("Config", "insurgency_server_ip"), int(config.get("Config", "insurgency_server_port")))
     manager = EventManager(manager_channels)
+
+    channel_whitelist = json.loads(config.get("Config", "channel_whitelist"))
 
     client = discord.Client()
     client.login(client_email, client_pass)
@@ -202,7 +204,7 @@ if __name__ == "__main__":
 
     @client.event
     def on_message(message):
-        if message.channel.id not in manager.channels:
+        if len(channel_whitelist) > 0 and message.channel.id not in channel_whitelist:
             return
 
         manager.handle_message(client)
