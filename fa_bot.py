@@ -89,6 +89,20 @@ class EventManager(object):
         info = self.insurgencyServer.get_info()
         return info
 
+class Commands(object):
+    armaserver = '!armaserver'
+    github = '!github'
+    help = '!help'
+    info = '!info'
+    insurgency = '!insurgency'
+    nextevent = '!nextevent'
+    ping = '!ping'
+    players = '!players'
+    rules = '!rules'
+    status = '!status'
+    testserver = '!testserver'
+    tsserver = '!tsserver'
+
 
 if __name__ == "__main__":
     logging.basicConfig()
@@ -127,6 +141,9 @@ if __name__ == "__main__":
 
     @client.event
     def on_message(message):
+        if message.channel.id not in manager.channels:
+            return
+
         manager.handle_message(client)
         content = message.content.lower()
 
