@@ -14,8 +14,87 @@ import json
 utc = pytz.utc
 
 
+class GameServer(object):
+    server = None
+
+    def __init__(self, ip, port):
+        self.server = valve.source.a2s.ServerQuerier((ip, port))
+
+    def players(self):
+        return self.server.get_players()
+
+    def info(self):
+        return self.server.get_info()
+
+    def rules(self):
+        return self.server.get_rules()
+
+    def ping(self):
+        return self.server.ping()
+
+    def raw_info(self):
+        self.server.request(valve.source.a2s.messages.InfoRequest())
+        raw_msg = self.server.get_response()
+        return filter(lambda x: x in string.printable, raw_msg)
+
+
+class ArmaServer(GameServer):
+    gamestate = {
+        -1: "No Answer",
+        1: "Server Empty / Mission Screen",
+        3: "Lobby Waiting",
+        5: "Loading Mission",
+        6: "Briefing Screen",
+        7: "In Progress",
+        9: "Debriefing Screen",
+        12: "Setting up",
+        13: "Briefing",
+        14: "Playing"
+    }
+
+    def __init__(self, ip, port):
+        super(ArmaServer, self).__init__(ip, port)
+
+    def state(self):
+        # python-valve doesn't support the extended data field in the info
+        # request message yet, so we have to do this by hand.
+        # raw message looks like this:
+        # IFolk ARPSAltisArma3fa3_a60_gamey_mission_v7@dw1.52.132676
+        # bf,r152,n0,s1,i1,mf,lf,vt,dt,ttdm,g65545,hd12ce14a,c4194303-4194303,f0,pw,e0,j0,k0,
+
+        self.server.request(valve.source.a2s.messages.InfoRequest())
+        raw_msg = self.server.get_response()
+        msg = filter(lambda x: x in string.printable, raw_msg)
+
+        regex = re.compile(".*,s(?P<serverstate>\d*),.*,t(?P<gametype>\w*),.*")
+
+        m = regex.search(msg, re.DOTALL)
+        s = int(m.group('serverstate'))
+        return [m.group('gametype'), self.gamestate[s]]
+
+
+class InsurgencyServer(GameServer):
+    def __init__(self, ip, port):
+        super(InsurgencyServer, self).__init__(ip, port)
+
+    def state(self):
+        # python-valve doesn't support the extended data field in the info
+        # request message yet, so we have to do this by hand.
+        # raw message looks like this:
+
+        self.server.request(valve.source.a2s.messages.InfoRequest())
+        raw_msg = self.server.get_response()
+        msg = filter(lambda x: x in string.printable, raw_msg)
+
+        regex = re.compile(".*,s(?P<serverstate>\d*),.*,t(?P<gametype>\w*),.*")
+
+        m = regex.search(msg, re.DOTALL)
+        s = int(m.group('serverstate'))
+        return [m.group('gametype'), self.gamestate[s]]
+
+
 class EventManager(object):
-    def __init__(self, channels, arma_server, insurgency_server):
+    def __init__(self, channels):
         self.events = (
             ("The Folk ARPS Sunday Session", 6, 19, 20),
             ("The Folk ARPS Tuesday Session", 1, 19, 20)
@@ -30,21 +109,6 @@ class EventManager(object):
         self.nextEvent = None
         self.timer = None
         self.channels = channels
-        self.server = valve.source.a2s.ServerQuerier((arma_server['ip'], arma_server['port']))
-        self.insurgencyServer = valve.source.a2s.ServerQuerier((insurgency_server['ip'], insurgency_server['port']))
-        
-        self.gamestate = {
-            -1: "No Answer",
-            1: "Server Empty / Mission Screen",
-            3: "Lobby Waiting",
-            5: "Loading Mission",
-            6: "Briefing Screen",
-            7: "In Progress",
-            9: "Debriefing Screen",
-            12: "Setting up",
-            13: "Briefing",
-            14: "Playing"
-        }
 
     def handle_message(self, cli):
         if self.timer is None:
@@ -80,48 +144,6 @@ class EventManager(object):
         d = datetime.datetime.now(self.timezone).date()
         days_ahead = weekday - d.weekday()
         return d + datetime.timedelta(days_ahead)
-
-    def players(self):
-        players = self.server.get_players()
-        return players
-
-    def info(self):
-        info = self.server.get_info()
-        return info
-
-    def rules(self):
-        rules = self.server.get_rules()
-        return rules
-
-    def ping(self):
-        ping = self.server.ping()
-        return ping
-
-    def state(self):
-        # python-valve doesn't support the extended data field in the info
-        # request message yet, so we have to do this by hand.
-        # raw message looks like this:
-        # IFolk ARPSAltisArma3fa3_a60_gamey_mission_v7@dw1.52.132676
-        # bf,r152,n0,s1,i1,mf,lf,vt,dt,ttdm,g65545,hd12ce14a,c4194303-4194303,f0,pw,e0,j0,k0,
-
-        self.server.request(valve.source.a2s.messages.InfoRequest())
-        raw_msg = self.server.get_response()
-        msg = filter(lambda x: x in string.printable, raw_msg)
-
-        regex = re.compile(".*,s(?P<serverstate>\d*),.*,t(?P<gametype>\w*),.*")
-
-        m = regex.search(msg, re.DOTALL)
-        s = int(m.group('serverstate'))
-        return [m.group('gametype'), self.gamestate[s]]
-
-    def in_info(self):
-        info = self.insurgencyServer.get_info()
-        return info
-
-    def get_raw_in_info(self):
-        self.insurgencyServer.request(valve.source.a2s.messages.InfoRequest())
-        raw_msg = self.insurgencyServer.get_response()
-        return filter(lambda x: x in string.printable, raw_msg)
 
 
 class Commands(object):
@@ -161,15 +183,9 @@ if __name__ == "__main__":
     client_pass = config.get("Config", "password")
 
     manager_channels = json.loads(config.get("Config", "channel_whitelist"))
-    manager_arma_server = {
-        'ip': config.get("Config", "arma_server_ip"),
-        'port': int(config.get("Config", "arma_server_port"))
-    }
-    manager_insurgency_server = {
-        'ip': config.get("Config", "insurgency_server_ip"),
-        'port': int(config.get("Config", "insurgency_server_port"))
-    }
-    manager = EventManager(manager_channels, manager_arma_server, manager_insurgency_server)
+    arma_server = ArmaServer(config.get("Config", "arma_server_ip"), int(config.get("Config", "arma_server_port")))
+    insurgency_server = InsurgencyServer(config.get("Config", "insurgency_server_ip"), int(config.get("Config", "insurgency_server_port")))
+    manager = EventManager(manager_channels)
 
     client = discord.Client()
     client.login(client_email, client_pass)
@@ -178,13 +194,11 @@ if __name__ == "__main__":
         print('Logging in to Discord failed')
         exit(1)
 
-
     @client.event
     def on_ready():
         print('Connected!')
         print('Username: ' + client.user.name)
         print('ID: ' + client.user.id)
-
 
     @client.event
     def on_message(message):
@@ -195,7 +209,7 @@ if __name__ == "__main__":
         content = message.content.lower()
 
         if content == Commands.status.command:
-            gametype, gamestate = manager.state()
+            gametype, gamestate = arma_server.state()
             client.send_message(message.channel, gamestate)
 
         elif content == Commands.help.command:
@@ -226,24 +240,25 @@ if __name__ == "__main__":
             client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
 
         elif content == Commands.ping.command:
-            ping = manager.ping()
+            ping = arma_server.ping()
             client.send_message(message.channel, "{} milliseconds".format(str(ping)))
 
         elif content == Commands.info.command:
-            info = manager.info()
+            info = arma_server.info()
             msg = "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
                   " {bot_count} AI on {map}"
             client.send_message(message.channel, msg.format(**info))
 
         elif content == Commands.players.command:
-            players = manager.players()
+            players = arma_server.players()
             player_string = "Total players: {player_count}\n".format(**players)
             for player in sorted(players["players"], key=lambda p: p["score"], reverse=True):
                 player_string += "{score} {name} (on for {duration} seconds)\n".format(**player)
             client.send_message(message.channel, player_string)
 
         elif content == Commands.rules.command:
-            rules = manager.rules()
+            # rules doesn't work for the arma server for some reason
+            rules = insurgency_server.rules()
             client.send_message(message.channel, rules["rule_count"] + " rules")
             for rule in rules["rules"]:
                 client.send_message(message.channel, rule)
@@ -251,7 +266,7 @@ if __name__ == "__main__":
         elif content == Commands.insurgency.command:
             msg = "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
                   " {bot_count} AI on {map}"
-            info = manager.in_info()
+            info = insurgency_server.in_info()
             client.send_message(message.channel, msg.format(**info))
 
         elif content == Commands.f3.command:
@@ -281,7 +296,7 @@ if __name__ == "__main__":
                 )
 
         elif content == Commands.test.command:
-            msg = manager.get_raw_in_info()
+            msg = arma_server.raw_info() + '\n\n' + insurgency_server.raw_info()
             client.send_message(message.channel, msg)
 
     client.run()
