@@ -7,6 +7,7 @@ import datetime
 import pytz
 import ConfigParser
 import valve.source.a2s
+import re
 
 
 logging.basicConfig()
@@ -22,6 +23,7 @@ if not client.is_logged_in:
     exit(1)
 
 utc = pytz.utc
+bikiregex = re.compile("^(?i)!biki ((\w)*)$")
 
 class EventManager :
     events = (("The Folk ARPS Sunday Session", 6, 19, 20), ("The Folk ARPS Tuesday Session", 1, 19, 20))
@@ -96,7 +98,7 @@ def on_ready():
 @client.event
 def on_message(message):
     manager.handleMessage(client)
-    content = message.content.lower();
+    content = message.content.lower()
     if (content == "!status") :
         client.send_message(message.channel, "Working. Probably.")
     if (content == "!nextevent") :
@@ -109,11 +111,9 @@ def on_message(message):
         client.send_message(message.channel, "server.folkarps.com:9988")
     if (content == "!github") :
         client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
-    if (content == "!help") :
-        client.send_message(message.channel, "Available commands: !armaserver, !testserver, !tsserver, !nextevent, !github, !status, !ping, !info, !players")
     if (content == "!ping") :
         ping = manager.ping()
-        client.send_message(message.channel, ping + " milliseconds")
+        client.send_message(message.channel, str(ping) + " milliseconds")
     if (content == "!info") :
         info = manager.info()
         client.send_message(message.channel, "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}".format(**info))
@@ -131,6 +131,10 @@ def on_message(message):
     if (content == "!insurgency") :
         info = manager.in_info()
         client.send_message(message.channel, "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}".format(**info))
-
+    bikimatch = bikiregex.match(message.content)
+    if (bikimatch is not None) :
+        client.send_message(message.channel, "https://community.bistudio.com/wiki?search="  + bikimatch.group(1) + "&title=Special%3ASearch&go=Go")
+    if (content == "!help") :
+        client.send_message(message.channel, "Available commands: !armaserver, !testserver, !tsserver, !nextevent, !github, !status, !ping, !info, !players, !biki *pagename*")
 
 client.run()
