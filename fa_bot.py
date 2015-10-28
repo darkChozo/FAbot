@@ -108,7 +108,7 @@ class EventManager(object):
         self.timezone = pytz.timezone("Europe/London")
         self.nextEvent = None
         self.timer = None
-        self.channels = announcement_channels
+        self.channels = channels
 
     def handle_message(self, cli):
         if self.timer is None:
