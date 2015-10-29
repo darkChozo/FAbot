@@ -35,9 +35,10 @@ def on_message(message):
         event_manager.handle_message(main_client)
         cmdline = commandregex.search(message.content.lower())
         logging.debug("Command : %s(%s)", cmdline.group('command'), cmdline.group('args'))
-        msg = commands[cmdline.group('command')](message, cmdline.group('args'))
-        if msg is not None:
-            main_client.send_message(message.channel, msg)
+        if cmdline.group('command') in commands:
+            msg = commands[cmdline.group('command')](message, cmdline.group('args'))
+            if msg is not None:
+                main_client.send_message(message.channel, msg)
 
 @main_client.event
 def on_member_join(member):
