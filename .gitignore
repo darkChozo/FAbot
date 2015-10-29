@@ -1,7 +1,7 @@
 config.ini
 config.ini.md
+FA_bot.log
 .ropeproject
-
 .venv/
 .idea/
 FAbot.egg-info/
