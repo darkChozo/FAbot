@@ -12,6 +12,7 @@ class Client(discord.Client):
 
 main_client = discord.Client()
 
+
 @main_client.event
 def on_ready():
     print('Connected!')

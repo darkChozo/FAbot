@@ -33,14 +33,13 @@ Copy file config.ini.sample and rename duplicate to config.ini
 Inside config file, fill out email and password, and if you want to test on your own server, change channels.
 
 # Development
-To add new commands, you'll need to write a new function to do the actual
-command, taking two arguments:
+To add new commands, you'll need to write a new function to do the actual command, taking two arguments:
 - *message* The actual discord message object which contains things like the
     channel, the author, the content and so on; and
 - *args* Any arguments that follow the actual command itself (so in _"!foo bar"_,
     args would be 'bar'
     
-To display any response, your function will need to contain
+Your function must return String, that will be sent as a response, or return nothing.
 
 If you want your function to show up once someone writes _!help_,
 in the first line of the function write documentation for it. Documentation is just a line of text
@@ -48,6 +47,9 @@ starting and ending with *"""*. Keep it formatted like documentation of other fu
 
 Once your function is written, you must add @command decorator to it.
 Just write @decorator('command') before it's declared.
+
+Save that file to folder *commands*. If you want to create new file inside that folder, you'll need to import it.
+Open file commands/__init__.py and append code `import filename`
 
 Example of new function:
 

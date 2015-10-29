@@ -23,4 +23,4 @@ class InsurgencyServer(GameServer):
 
         m = regex.search(msg, re.DOTALL)
         s = int(m.group('serverstate'))
-        return [m.group('gametype'), self.gamestate[s]]
+        return [m.group('gametype'), self.gamestate[s]]  # TODO: Unresolver deference gamestate. BTW tuple :)

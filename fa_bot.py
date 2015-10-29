@@ -1,5 +1,4 @@
 #!/usr/local/bin/python
-import discord
 import logging
 import ConfigParser
 import json
