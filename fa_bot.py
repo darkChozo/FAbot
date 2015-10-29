@@ -13,7 +13,9 @@ import json
 
 utc = pytz.utc
 
-
+################################################################################
+#   Server wrapper classes                                                     #
+################################################################################
 class GameServer(object):
     server = None
 
@@ -81,6 +83,7 @@ class InsurgencyServer(GameServer):
         # python-valve doesn't support the extended data field in the info
         # request message yet, so we have to do this by hand.
         # raw message looks like this:
+        # IFolk ARPSembassy_coopinsurgencyInsurgencydw2.0.4.2i~@checkpoint,theater:default,ver:2042,nwibanlist,nospawnprotection,f
 
         self.server.request(valve.source.a2s.messages.InfoRequest())
         raw_msg = self.server.get_response()
@@ -93,6 +96,9 @@ class InsurgencyServer(GameServer):
         return [m.group('gametype'), self.gamestate[s]]
 
 
+################################################################################
+#   Event Manager                                                              #
+################################################################################
 class EventManager(object):
     def __init__(self, channels):
         self.events = (
@@ -145,37 +151,150 @@ class EventManager(object):
         days_ahead = weekday - d.weekday()
         return d + datetime.timedelta(days_ahead)
 
+################################################################################
+#   FA Bot command functions                                                   #
+################################################################################
 
-class Commands(object):
-    class Command(object):
-        def __init__(self, command, help_text=None):
-            self.command = command
-            self.help_text = help_text
+def status(message, args):
+    if message is None:
+        return "!status : reports the current state of the game on the Arma 3 server"
+    gametype, gamestate = arma_server.state()
+    client.send_message(message.channel, gamestate)
 
-    armaserver = Command('!armaserver', '!armaserver')
-    biki = Command('!biki', '!biki *pagename*')
-    f3 = Command('!f3', '!f3')
-    f3wiki = Command('!f3wiki', '!f3wiki *pagename*')
-    github = Command('!github', '!github')
-    help = Command('!help', '!help')
-    info = Command('!info', '!info')
-    insurgency = Command('!insurgency', '!insurgency')
-    nextevent = Command('!nextevent', '!nextevent')
-    ping = Command('!ping', '!ping')
-    players = Command('!players', '!players')
-    rules = Command('!rules', '!rules')
-    status = Command('!status', '!status')
-    test = Command('!test')
-    testserver = Command('!testserver', '!testserver')
-    tsserver = Command('!tsserver', '!tsserver')
+def nextevent(message, args):
+    if message is None:
+        return "!nextevent : reports the next scheduled Folk ARPS session"
+    client.send_message(
+        message.channel,
+        "Next event is {} at {}".format(manager.nextEvent[0], str(manager.nextEvent[1]))
+    )
+
+def armaserver(message, args):
+    if message is None:
+        return "!armaserver : report the hostname and port of the Folk ARPS Arma server"
+    client.send_message(message.channel, "server.folkarps.com:2702")
+
+def testserver(message, args):
+    if message is None:
+        return "!testserver : report the hostname and port of the Folk ARPS mission testing Arma server"
+    client.send_message(message.channel, "server.folkarps.com:2722")
+
+def tsserver(message, args):
+    if message is None:
+        return "!tsserver : report the hostname and port of the Folk ARPS teamspeak server"
+    client.send_message(message.channel, "server.folkarps.com:9988")
+
+def github(message, args):
+    if message is None:
+        return "!github : report the URL of the FA_bot github project"
+    client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
+
+def ping(message, args):
+    if message is None:
+        return "!ping : report the ping time from FA_bot to the Arma server"
+    ping = arma_server.ping()
+    client.send_message(message.channel, "{} milliseconds".format(str(ping)))
+
+def info(message, args):
+    if message is None:
+        return "!info : report some basic information on the Arma server"
+    info = arma_server.info()
+    msg = "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}"
+    client.send_message(message.channel, msg.format(**info))
+
+def players(message, args):
+    if message is None:
+        return "!players : show a list of players on the Arma server"
+    if args == "insurgency":
+        players = insurgency_server.players()
+    else:
+        players = arma_server.players()
+    player_string = "Total players: {player_count}\n".format(**players)
+    for player in sorted(players["players"], key=lambda p: p["score"], reverse=True):
+        player_string += "{score} {name} (on for {duration} seconds)\n".format(**player)
+    client.send_message(message.channel, player_string)
+
+def rules(message, args):
+    if message is None:
+        return "!rules : report on the cvars in force on the insurgency server"
+    # rules doesn't work for the arma server for some reason
+    rules = insurgency_server.rules()
+    client.send_message(message.channel, rules["rule_count"] + " rules")
+    for rule in rules["rules"]:
+        client.send_message(message.channel, rule)
+
+def insurgency(message, args):
+    if message is None:
+        return "!insurgency : report on the current state of the Folk ARPS Insurgency server"
+    msg = "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}"
+    info = insurgency_server.info()
+    client.send_message(message.channel, msg.format(**info))
+
+def f3(message, args):
+    if message is None:
+        return "!f3 : report the URL for the latest F3 release"
+    client.send_message( message.channel, "Latest F3 downloads: http://ferstaberinde.com/f3/en//index.php?title=Downloads")
+
+def biki(message, args):
+    if message is None:
+        return "!biki <bar> : search the bohemia interactive wiki for <bar>"
+    if args is not None:
+        client.send_message(message.channel, "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format(args))
+
+def f3wiki(message, args):
+    if message is None:
+        return "!f3wiki <foo> : search the f3 wiki for <foo>"
+    if args is not None:
+        client.send_message(message.channel, "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format(args))
+
+def test(message, args):
+    if message is None:
+        return "!test : under development"
+    msg = arma_server.raw_info() + '\n\n' + insurgency_server.raw_info()
+    client.send_message(message.channel, msg)
+
+def help(message, args):
+    if message is None:
+        return "!help : list all FA_bot commands"
+    collectHelpMessages(message, args)
+
+commands = {'status'     : status,
+            'help'       : help,
+            'github'     : github,
+            'armaserver' : armaserver,
+            'testserver' : testserver,
+            'tsserver'   : tsserver,
+            'nextevent'  : nextevent,
+            'ping'       : ping,
+            'info'       : info,
+            'players'    : players,
+            'insurgency' : insurgency,
+            'biki'       : biki,
+            'f3wiki'     : f3wiki,
+            'rules'      : rules,
+            'test'       : test
+            }
+
+# This must be *after* the commands dict and help() must be *before* it
+def collectHelpMessages(message, args):
+    help_texts = []
+    for key, item in commands.items():
+        help_texts.append(item(None, ""))
+    msg = ',\n '.join(help_texts)
+    client.send_message(message.channel, msg)
 
 
+################################################################################
+#   FA Bot                                                                     #
+################################################################################
 if __name__ == "__main__":
-    bikiregex = re.compile("^(?i)!biki ((\w)*)$")
-    f3wikiregex = re.compile("^(?i)!f3wiki ((\w)*)$")
+    FORMAT = "%(asctime)-15s %(message)s"
+    logging.basicConfig(filename="FA_bot.log", level=logging.DEBUG, format=FORMAT)
+    logging.info("FAbot starting up")
 
-    logging.basicConfig()
+    commandregex = re.compile("(?s)^!(?P<command>\w+)\s*(?P<args>.*)?")
 
+    logging.info("Reading configuration")
     config = ConfigParser.RawConfigParser()
     config.read("config.ini")
 
@@ -183,16 +302,19 @@ if __name__ == "__main__":
     client_pass = config.get("Config", "password")
 
     manager_channels = json.loads(config.get("Config", "announcement_channels"))
-    arma_server = ArmaServer(config.get("Config", "arma_server_ip"), int(config.get("Config", "arma_server_port")))
-    insurgency_server = InsurgencyServer(config.get("Config", "insurgency_server_ip"), int(config.get("Config", "insurgency_server_port")))
-    manager = EventManager(manager_channels)
-
     channel_whitelist = json.loads(config.get("Config", "channel_whitelist"))
 
+    manager = EventManager(manager_channels)
+
+    arma_server = ArmaServer(config.get("Config", "arma_server_ip"), int(config.get("Config", "arma_server_port")))
+    insurgency_server = InsurgencyServer(config.get("Config", "insurgency_server_ip"), int(config.get("Config", "insurgency_server_port")))
+
     client = discord.Client()
+    logging.info("Logging into Discord")
     client.login(client_email, client_pass)
 
     if not client.is_logged_in:
+        logging.critical("Logging into Discord failed")
         print('Logging in to Discord failed')
         exit(1)
 
@@ -201,104 +323,24 @@ if __name__ == "__main__":
         print('Connected!')
         print('Username: ' + client.user.name)
         print('ID: ' + client.user.id)
+        logging.info("Connected to Discord as %s (ID: %s)", client.user.name, client.user.id)
 
     @client.event
     def on_message(message):
-        if len(channel_whitelist) > 0 and message.channel.id not in channel_whitelist:
-            return
+        if (message.content[0]=="!"):
+            if len(channel_whitelist) > 0 and message.channel.id not in channel_whitelist:
+                return
 
-        manager.handle_message(client)
-        content = message.content.lower()
+            logging.info("#%s (%s) : %s",message.channel.name,message.author.name,message.content)
 
-        if content == Commands.status.command:
-            gametype, gamestate = arma_server.state()
-            client.send_message(message.channel, gamestate)
+            manager.handle_message(client)
 
-        elif content == Commands.help.command:
-            help_texts = []
-            for key, item in Commands.__dict__.items():
-                if type(item).__name__ == 'Command':
-                    if item.help_text is not None:
-                        help_texts.append(item.help_text)
-            msg = ', '.join(help_texts)
-            client.send_message(message.channel, msg)
+            cmdline = commandregex.search(message.content.lower())
 
-        elif content == Commands.nextevent.command:
-            client.send_message(
-                message.channel,
-                "Next event is {} at {}".format(manager.nextEvent[0], str(manager.nextEvent[1]))
-            )
+            logging.debug("Command : %s(%s)",cmdline.group('command'),cmdline.group('args'))
 
-        elif content == Commands.armaserver.command:
-            client.send_message(message.channel, "server.folkarps.com:2702")
+            commands[cmdline.group('command')](message, cmdline.group('args'))
 
-        elif content == Commands.testserver.command:
-            client.send_message(message.channel, "server.folkarps.com:2722")
 
-        elif content == Commands.tsserver.command:
-            client.send_message(message.channel, "server.folkarps.com:9988")
-
-        elif content == Commands.github.command:
-            client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
-
-        elif content == Commands.ping.command:
-            ping = arma_server.ping()
-            client.send_message(message.channel, "{} milliseconds".format(str(ping)))
-
-        elif content == Commands.info.command:
-            info = arma_server.info()
-            msg = "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
-                  " {bot_count} AI on {map}"
-            client.send_message(message.channel, msg.format(**info))
-
-        elif content == Commands.players.command:
-            players = arma_server.players()
-            player_string = "Total players: {player_count}\n".format(**players)
-            for player in sorted(players["players"], key=lambda p: p["score"], reverse=True):
-                player_string += "{score} {name} (on for {duration} seconds)\n".format(**player)
-            client.send_message(message.channel, player_string)
-
-        elif content == Commands.rules.command:
-            # rules doesn't work for the arma server for some reason
-            rules = insurgency_server.rules()
-            client.send_message(message.channel, rules["rule_count"] + " rules")
-            for rule in rules["rules"]:
-                client.send_message(message.channel, rule)
-
-        elif content == Commands.insurgency.command:
-            msg = "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
-                  " {bot_count} AI on {map}"
-            info = insurgency_server.in_info()
-            client.send_message(message.channel, msg.format(**info))
-
-        elif content == Commands.f3.command:
-            client.send_message(
-                message.channel,
-                "Latest F3 downloads: http://ferstaberinde.com/f3/en//index.php?title=Downloads"
-            )
-
-        elif content.startswith(Commands.biki.command):
-            bikimatch = bikiregex.match(message.content)
-            if bikimatch is not None:
-                client.send_message(
-                    message.channel,
-                    "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format(
-                        bikimatch.group(1)
-                    )
-                )
-
-        elif content.startswith(Commands.f3wiki.command):
-            f3wikimatch = f3wikiregex.match(message.content)
-            if f3wikimatch is not None:
-                client.send_message(
-                    message.channel,
-                    "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format(
-                        f3wikimatch.group(1)
-                    )
-                )
-
-        elif content == Commands.test.command:
-            msg = arma_server.raw_info() + '\n\n' + insurgency_server.raw_info()
-            client.send_message(message.channel, msg)
-
+    logging.info("Entering main message event loop")
     client.run()
