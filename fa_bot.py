@@ -16,6 +16,8 @@ utc = pytz.utc
 ################################################################################
 #   Server wrapper classes                                                     #
 ################################################################################
+
+
 class GameServer(object):
     server = None
 
@@ -152,59 +154,101 @@ class EventManager(object):
         return d + datetime.timedelta(days_ahead)
 
 ################################################################################
+#   FA Bot command functions logic                                             #
+################################################################################
+
+commands = {}
+
+
+def command(cmd):
+    """
+    When you write a new command, add this decorator to it, so it's gets registered
+    :param cmd:
+    :return:
+    """
+    def wrapper(wrapped):
+        commands[cmd] = wrapped
+
+        return wrapped
+
+    return wrapper
+
+
+@command('help')
+def help_cmd(message, args):
+    """!help : display this text"""
+    if not args:  # We don't want to spam chat because someone wanted to sing The Beatles in Spanish, do we?
+        help_texts = ["Available commands:"]
+        for item in commands.values():
+            if item.func_doc:
+                help_texts.append(item.func_doc)
+        msg = '\n'.join(help_texts)
+        client.send_message(message.channel, msg)
+
+
+################################################################################
 #   FA Bot command functions                                                   #
 ################################################################################
 
+
+@command('status')
 def status(message, args):
-    if message is None:
-        return "!status : reports the current state of the game on the Arma 3 server"
+    """!status : reports the current state of the game on the Arma 3 server"""
     gametype, gamestate = arma_server.state()
     client.send_message(message.channel, gamestate)
 
+
+@command('nextevent')
 def nextevent(message, args):
-    if message is None:
-        return "!nextevent : reports the next scheduled Folk ARPS session"
+    """!nextevent : reports the next scheduled Folk ARPS session"""
     client.send_message(
         message.channel,
         "Next event is {} at {}".format(manager.nextEvent[0], str(manager.nextEvent[1]))
     )
 
+
+@command('armaserver')
 def armaserver(message, args):
-    if message is None:
-        return "!armaserver : report the hostname and port of the Folk ARPS Arma server"
+    """!armaserver : report the hostname and port of the Folk ARPS Arma server"""
     client.send_message(message.channel, "server.folkarps.com:2702")
 
+
+@command('testserver')
 def testserver(message, args):
-    if message is None:
-        return "!testserver : report the hostname and port of the Folk ARPS mission testing Arma server"
+    """!testserver : report the hostname and port of the Folk ARPS mission testing Arma server"""
     client.send_message(message.channel, "server.folkarps.com:2722")
 
+
+@command('tsserver')
 def tsserver(message, args):
-    if message is None:
-        return "!tsserver : report the hostname and port of the Folk ARPS teamspeak server"
+    """!tsserver : report the hostname and port of the Folk ARPS teamspeak server"""
     client.send_message(message.channel, "server.folkarps.com:9988")
 
+
+@command('github')
 def github(message, args):
-    if message is None:
-        return "!github : report the URL of the FA_bot github project"
+    """!github : report the URL of the FA_bot github project"""
     client.send_message(message.channel, "https://github.com/darkChozo/folkbot")
 
+
+@command('ping')
 def ping(message, args):
-    if message is None:
-        return "!ping : report the ping time from FA_bot to the Arma server"
+    """!ping : report the ping time from FA_bot to the Arma server"""
     ping = arma_server.ping()
     client.send_message(message.channel, "{} milliseconds".format(str(ping)))
 
+
+@command('info')
 def info(message, args):
-    if message is None:
-        return "!info : report some basic information on the Arma server"
+    """!info : report some basic information on the Arma server"""
     info = arma_server.info()
     msg = "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}"
     client.send_message(message.channel, msg.format(**info))
 
+
+@command('players')
 def players(message, args):
-    if message is None:
-        return "!players : show a list of players on the Arma server"
+    """!players (insurgency) : show a list of players on the Arma (Insurgency) server"""
     if args == "insurgency":
         players = insurgency_server.players()
     else:
@@ -214,73 +258,49 @@ def players(message, args):
         player_string += "{score} {name} (on for {duration} seconds)\n".format(**player)
     client.send_message(message.channel, player_string)
 
+
+@command('rules')
 def rules(message, args):
-    if message is None:
-        return "!rules : report on the cvars in force on the insurgency server"
+    """!rules : report on the cvars in force on the insurgency server"""
     # rules doesn't work for the arma server for some reason
     rules = insurgency_server.rules()
     client.send_message(message.channel, rules["rule_count"] + " rules")
     for rule in rules["rules"]:
         client.send_message(message.channel, rule)
 
+
+@command('insurgency')
 def insurgency(message, args):
-    if message is None:
-        return "!insurgency : report on the current state of the Folk ARPS Insurgency server"
+    """!insurgency : report on the current state of the Folk ARPS Insurgency server"""
     msg = "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}"
     info = insurgency_server.info()
     client.send_message(message.channel, msg.format(**info))
 
+
+@command('f3')
 def f3(message, args):
-    if message is None:
-        return "!f3 : report the URL for the latest F3 release"
+    """!f3 : report the URL for the latest F3 release"""
     client.send_message( message.channel, "Latest F3 downloads: http://ferstaberinde.com/f3/en//index.php?title=Downloads")
 
+
+@command('biki')
 def biki(message, args):
-    if message is None:
-        return "!biki <bar> : search the bohemia interactive wiki for <bar>"
+    """!biki <term> : search the bohemia interactive wiki for <term>"""
     if args is not None:
-        client.send_message(message.channel, "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format(args))
+        client.send_message(message.channel, "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format("+".join(args.split())))
 
+
+@command('f3wiki')
 def f3wiki(message, args):
-    if message is None:
-        return "!f3wiki <foo> : search the f3 wiki for <foo>"
+    """!f3wiki <term> : search the f3 wiki for <term>"""
     if args is not None:
-        client.send_message(message.channel, "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format(args))
+        client.send_message(message.channel, "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format("+".join(args.split())))
 
+
+@command('test')
 def test(message, args):
-    if message is None:
-        return "!test : under development"
+    # """!test : under development"""
     msg = arma_server.raw_info() + '\n\n' + insurgency_server.raw_info()
-    client.send_message(message.channel, msg)
-
-def help(message, args):
-    if message is None:
-        return "!help : list all FA_bot commands"
-    collectHelpMessages(message, args)
-
-commands = {'status'     : status,
-            'help'       : help,
-            'github'     : github,
-            'armaserver' : armaserver,
-            'testserver' : testserver,
-            'tsserver'   : tsserver,
-            'nextevent'  : nextevent,
-            'ping'       : ping,
-            'info'       : info,
-            'players'    : players,
-            'insurgency' : insurgency,
-            'biki'       : biki,
-            'f3wiki'     : f3wiki,
-            'rules'      : rules,
-            'test'       : test
-            }
-
-# This must be *after* the commands dict and help() must be *before* it
-def collectHelpMessages(message, args):
-    help_texts = []
-    for key, item in commands.items():
-        help_texts.append(item(None, ""))
-    msg = ',\n '.join(help_texts)
     client.send_message(message.channel, msg)
 
 
