@@ -13,6 +13,9 @@ import json
 
 utc = pytz.utc
 
+################################################################################
+#   Server wrapper classes                                                     #
+################################################################################
 class GameServer(object):
     server = None
 
@@ -80,6 +83,7 @@ class InsurgencyServer(GameServer):
         # python-valve doesn't support the extended data field in the info
         # request message yet, so we have to do this by hand.
         # raw message looks like this:
+        # IFolk ARPSembassy_coopinsurgencyInsurgencydw2.0.4.2i~@checkpoint,theater:default,ver:2042,nwibanlist,nospawnprotection,f
 
         self.server.request(valve.source.a2s.messages.InfoRequest())
         raw_msg = self.server.get_response()
@@ -92,6 +96,9 @@ class InsurgencyServer(GameServer):
         return [m.group('gametype'), self.gamestate[s]]
 
 
+################################################################################
+#   Event Manager                                                              #
+################################################################################
 class EventManager(object):
     def __init__(self, channels):
         self.events = (
@@ -192,8 +199,7 @@ def info(message, args):
     if message is None:
         return "!info : report some basic information on the Arma server"
     info = arma_server.info()
-    msg = "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
-        " {bot_count} AI on {map}"
+    msg = "Arma 3 v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}"
     client.send_message(message.channel, msg.format(**info))
 
 def players(message, args):
@@ -220,8 +226,7 @@ def rules(message, args):
 def insurgency(message, args):
     if message is None:
         return "!insurgency : report on the current state of the Folk ARPS Insurgency server"
-    msg = "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans," \
-        " {bot_count} AI on {map}"
+    msg = "Insurgency v{version} - {server_name} - {game} - {player_count}/{max_players} humans, {bot_count} AI on {map}"
     info = insurgency_server.info()
     client.send_message(message.channel, msg.format(**info))
 
@@ -234,19 +239,13 @@ def biki(message, args):
     if message is None:
         return "!biki <bar> : search the bohemia interactive wiki for <bar>"
     if args is not None:
-        client.send_message(
-            message.channel,
-            "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format(args)
-            )
+        client.send_message(message.channel, "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format(args))
 
 def f3wiki(message, args):
     if message is None:
         return "!f3wiki <foo> : search the f3 wiki for <foo>"
     if args is not None:
-        client.send_message(
-            message.channel,
-            "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format(args)
-            )
+        client.send_message(message.channel, "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format(args))
 
 def test(message, args):
     if message is None:
@@ -257,7 +256,7 @@ def test(message, args):
 def help(message, args):
     if message is None:
         return "!help : list all FA_bot commands"
-    helper(message, args)
+    collectHelpMessages(message, args)
 
 commands = {'status'     : status,
             'help'       : help,
@@ -276,7 +275,8 @@ commands = {'status'     : status,
             'test'       : test
             }
 
-def helper(message, args):
+# This must be *after* the commands dict and help() must be *before* it
+def collectHelpMessages(message, args):
     help_texts = []
     for key, item in commands.items():
         help_texts.append(item(None, ""))
