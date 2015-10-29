@@ -22,8 +22,13 @@ class FAbot(object):
 
         client_email = config.get("Config", "email")
         client_pass = config.get("Config", "password")
-        event_manager.manager_channels = json.loads(config.get("Config", "announcement_channels"))
+        event_manager.announcement_channels = json.loads(config.get("Config", "announcement_channels"))
+
         main_client.channel_whitelist = json.loads(config.get("Config", "channel_whitelist"))
+        main_client.announcement_channels = json.loads(config.get("Config", "announcement_channels"))
+        main_client.send_welcome_pm = config.getboolean("Config", "send_welcome_pm")
+        main_client.make_join_announcment = config.getboolean("Config", "make_join_announcment")
+        main_client.make_leave_announcment = config.getboolean("Config", "make_leave_announcment")
 
         # Game servers
         game_servers.game_servers['arma'] = game_servers.ArmaServer(

@@ -20,7 +20,7 @@ class EventManager(object):
         self.timezone = timezone("Europe/London")
         self.nextEvent = None
         self.timer = None
-        self.channels = []
+        self.announcement_channels = []
 
     def handle_message(self, cli):
         if self.timer is None:
@@ -39,7 +39,7 @@ class EventManager(object):
     def handle_timer(self, cli, message):
         print "timer complete, printing """ + message + '"'
         self.timer = None
-        for channel in self.channels:
+        for channel in self.announcement_channels:
             cli.send_message(cli.get_channel(channel), message)
 
     def find_next_event(self):

@@ -12,3 +12,7 @@ arma_server_ip:91.121.223.212
 arma_server_port:2703
 insurgency_server_ip:91.121.223.212
 insurgency_server_port:27015
+
+send_welcome_pm:false
+make_join_announcment:false
+make_leave_announcment:false
