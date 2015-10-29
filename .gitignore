@@ -7,3 +7,5 @@ FA_bot.log
 FAbot.egg-info/
 build/
 dist/
+welcome_pm.txt
+*.pyc
