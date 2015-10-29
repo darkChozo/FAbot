@@ -6,20 +6,20 @@ Bot is configurable, so it can be used with other communities.
 
 ### Features
 FAbot Currently allows for the following commands:
-    * !help - Gives a list of commands.
-    * !github - Gives the github URL for the bot
-    * !armaserver - Gives the address of the main Arma Server
-    * !testserver - Gives the address of the test / mission maker Arma Server
-    * !tsserver - Gives the hostname and port number for the main ARMA server, test ARMA server and Teamspeak server
-    * !nextevent - Lists the next scheduled Folk ARPS session
-    * !status - Reports the game status on the main Folk ARPS ARMA server
-    * !ping - Reports the ping time to the main Folk ARPS ARMA server
-    * !info - Reports information on the main Folk ARPS ARMA server including map name, player count, game state and game type
-    * !players - Reports the player count on the main server and a list of the players
-    * !insurgency - Reports information on the Folk ARPS Insurgency server
-    * !f3 - Gives the address to latest f3 framework download
-    * !f3wiki *pagename* - Searches the f3 Wiki
-    * !biki *pagename* - Searches the Bohemia Interactive Wiki
+* !help - Gives a list of commands.
+* !github - Gives the github URL for the bot
+* !armaserver - Gives the address of the main Arma Server
+* !testserver - Gives the address of the test / mission maker Arma Server
+* !tsserver - Gives the hostname and port number for the main ARMA server, test ARMA server and Teamspeak server
+* !nextevent - Lists the next scheduled Folk ARPS session
+* !status - Reports the game status on the main Folk ARPS ARMA server
+* !ping - Reports the ping time to the main Folk ARPS ARMA server
+* !info - Reports information on the main Folk ARPS ARMA server including map name, player count, game state and game type
+* !players - Reports the player count on the main server and a list of the players
+* !insurgency - Reports information on the Folk ARPS Insurgency server
+* !f3 - Gives the address to latest f3 framework download
+* !f3wiki *pagename* - Searches the f3 Wiki
+* !biki *pagename* - Searches the Bohemia Interactive Wiki
 
 # Installation
 If you're using virtualenv (you should) create it in subfolder .venv (it's gitignored).
