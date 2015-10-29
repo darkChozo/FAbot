@@ -287,14 +287,14 @@ def f3(message, args):
 def biki(message, args):
     """!biki <term> : search the bohemia interactive wiki for <term>"""
     if args is not None:
-        client.send_message(message.channel, "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format("+".join(args)))
+        client.send_message(message.channel, "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format("+".join(args.split())))
 
 
 @command('f3wiki')
 def f3wiki(message, args):
     """!f3wiki <term> : search the f3 wiki for <term>"""
     if args is not None:
-        client.send_message(message.channel, "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format("+".join(args)))
+        client.send_message(message.channel, "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format("+".join(args.split())))
 
 
 @command('test')
