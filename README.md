@@ -39,11 +39,24 @@ To install (should take care of dependencies):
     python setup.py develop
 
 # Development
-To add new commands, you'll need to edit two places: "class Commands" and "def on_message"
+To add new commands, you'll need to write a new function to do the actual
+command, taking two arguments:
+- *message* The actual discord message object which contains things like the
+    channel, the author, the content and so on; and
+- *args* Any arguments that follow the actual command itself (so in _"!foo bar"_,
+    args would be 'bar'
 
-Commands is a helper class, that keeps all available commands. Why is that important? Because it helps you not to worry about !help command!
-Just add new command to it with code like
-    foo = Command('!foo', '!foo *bar*')
-First parameter is command user has to type, and second one (optional) will show up instead of the command when !help is printed.
+Your function must test for the case where *message* is _None_, and return a
+text string if it is; this is usage message, which gets reported by the FAbot
+_!help_ command. 
 
-on_message is the place where you'll be adding new stuff.
+Once your function is written, you must edit the *commands* dict and add an
+entry linking the command name you want to use with your new function:
+
+``` 
+commands = {'usage'      : help,
+            'help'       : help}
+```
+
+So here the user can use either _"!usage"_ or _"!help"_ and in both cases the
+help() function will be called. 
