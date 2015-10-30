@@ -2,10 +2,10 @@
 email:fa_bot@example.com
 password:pass
 
-channel_whitelist:[]
+;;if commented out, channel_whitelist will default to []
 ;channel_whitelist:["107862710267453440","108326959460663296"]
 
-announcement_channels:[]
+;if commented out, announcement_channels will default to []
 ;announcement_channels:["107862710267453440"]
 
 arma_server_ip:91.121.223.212
@@ -13,6 +13,9 @@ arma_server_port:2703
 insurgency_server_ip:91.121.223.212
 insurgency_server_port:27015
 
-send_welcome_pm:false
-make_join_announcment:false
-make_leave_announcment:false
+;;if any of these to enable announcement
+;welcome_pm:Hi! Welcome to the $servername, $username!
+;    I am the $botname, and if you want to know more about me, just send
+;    !help
+;join_announcement:$username joined this channel.
+;leave_announcement:$username left this channel.

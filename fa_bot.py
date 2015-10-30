@@ -1,7 +1,6 @@
 #!/usr/local/bin/python
 import logging
-import ConfigParser
-import json
+from config_manager import ConfigManager
 from discord_client import main_client
 import event_manager
 import game_servers
@@ -17,27 +16,27 @@ class FAbot(object):
 
         # Configuration file
         logging.info("Reading configuration")
-        config = ConfigParser.RawConfigParser()
-        config.read("config.ini")
+        config = ConfigManager("config.ini")
 
-        client_email = config.get("Config", "email")
-        client_pass = config.get("Config", "password")
-        event_manager.announcement_channels = json.loads(config.get("Config", "announcement_channels"))
+        client_email = config.get("email")
+        client_pass = config.get("password")
+        event_manager.announcement_channels = config.get_json("announcement_channels", default=[])
+        # TODO: probably event manager should take channels from client instead?
 
-        main_client.channel_whitelist = json.loads(config.get("Config", "channel_whitelist"))
-        main_client.announcement_channels = json.loads(config.get("Config", "announcement_channels"))
-        main_client.send_welcome_pm = config.getboolean("Config", "send_welcome_pm")
-        main_client.make_join_announcment = config.getboolean("Config", "make_join_announcment")
-        main_client.make_leave_announcment = config.getboolean("Config", "make_leave_announcment")
+        main_client.channel_whitelist = config.get_json("channel_whitelist", default=[])
+        main_client.announcement_channels = config.get_json("announcement_channels", default=[])
+        main_client.welcome_pm = config.get("welcome_pm")
+        main_client.join_announcement = config.get("join_announcement")
+        main_client.leave_announcement = config.get("leave_announcement")
 
         # Game servers
         game_servers.game_servers['arma'] = game_servers.ArmaServer(
-            ip=config.get("Config", "arma_server_ip"),
-            port=int(config.get("Config", "arma_server_port"))
+            ip=config.get("arma_server_ip"),
+            port=int(config.get("arma_server_port"))
         )
         game_servers.game_servers['insurgency'] = game_servers.InsurgencyServer(
-            ip=config.get("Config", "insurgency_server_ip"),
-            port=int(config.get("Config", "insurgency_server_port"))
+            ip=config.get("insurgency_server_ip"),
+            port=int(config.get("insurgency_server_port"))
         )
 
         # Discord client
