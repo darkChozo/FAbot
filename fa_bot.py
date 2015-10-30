@@ -20,10 +20,11 @@ class FAbot(object):
 
         client_email = config.get("email")
         client_pass = config.get("password")
-        event_manager.announcement_channels = config.get_json("announcement_channels")
+        event_manager.announcement_channels = config.get_json("announcement_channels", default=[])
+        # TODO: probably event manager should take channels from client instead?
 
-        main_client.channel_whitelist = config.get_json("channel_whitelist")
-        main_client.announcement_channels = config.get_json("announcement_channels")
+        main_client.channel_whitelist = config.get_json("channel_whitelist", default=[])
+        main_client.announcement_channels = config.get_json("announcement_channels", default=[])
         main_client.welcome_pm = config.get("welcome_pm")
         main_client.join_announcement = config.get("join_announcement")
         main_client.leave_announcement = config.get("leave_announcement")
