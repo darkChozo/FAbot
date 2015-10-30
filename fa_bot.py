@@ -2,7 +2,7 @@
 import logging
 from config_manager import ConfigManager
 from discord_client import main_client
-import event_manager
+from event_manager import event_manager
 import game_servers
 
 
