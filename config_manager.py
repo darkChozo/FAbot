@@ -24,29 +24,7 @@ class ConfigManager(object):
         return default
 
     def get_json(self, key, section="Config", default=None):
-        value = self.get(key, section=section, default=default)
-        try:
-            return json.loads(value)
-        except TypeError:
+        value = self.get(key, section=section)
+        if value is None:
             return default
-
-    def get_bool(self, key, section="Config", default=None):
-        value = self.get(key, section=section, default=default)
-        try:
-            return bool(value)
-        except TypeError:
-            return default
-
-    def get_float(self, key, section="Config", default=None):
-        value = self.get(key, section=section, default=default)
-        try:
-            return float(value)
-        except TypeError:
-            return default
-
-    def get_int(self, key, section="Config", default=None):
-        value = self.get(key, section=section, default=default)
-        try:
-            return int(value)
-        except TypeError:
-            return default
+        return json.loads(value)
