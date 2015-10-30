@@ -14,7 +14,7 @@ def status(message, args):
 @command('nextevent')
 def nextevent(message, args):
     """!nextevent : reports the next scheduled Folk ARPS session"""
-    return "Next event is {} at {}".format(event_manager.nextEvent[0], str(event_manager.nextEvent[1]))
+    return event_manager.next_event_message()
 
 
 @command('armaserver')

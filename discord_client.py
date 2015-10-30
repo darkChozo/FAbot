@@ -27,12 +27,12 @@ def on_ready():
 
 @main_client.event
 def on_message(message):
+    event_manager.handle_message(main_client)
     if message.content[0] == "!":
         if len(main_client.channel_whitelist) > 0 and message.channel.id not in main_client.channel_whitelist:
             return
 
         logging.info("#%s (%s) : %s", message.channel.name, message.author.name, message.content)
-        event_manager.handle_message(main_client)
         cmdline = commandregex.search(message.content.lower())
         logging.debug("Command : %s(%s)", cmdline.group('command'), cmdline.group('args'))
         if cmdline.group('command') in commands:
