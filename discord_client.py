@@ -31,8 +31,10 @@ def on_message(message):
     if message.content[0] == "!":
         if len(main_client.channel_whitelist) > 0 and message.channel.id not in main_client.channel_whitelist:
             return
-
-        logging.info("#%s (%s) : %s", message.channel.name, message.author.name, message.content)
+        if not message.channel.is_private:
+            logging.info("#%s (%s) : %s", message.channel.name, message.author.name, message.content)
+        else:
+            logging.info("%s : %s", message.author.name, message.content)
         cmdline = commandregex.search(message.content.lower())
         logging.debug("Command : %s(%s)", cmdline.group('command'), cmdline.group('args'))
         if cmdline.group('command') in commands:
