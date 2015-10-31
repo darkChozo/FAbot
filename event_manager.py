@@ -49,7 +49,6 @@ class EventManager(object):
             t = self.timezone.localize(
                 datetime.datetime.combine(self.next_weekday(event[1]), datetime.time(event[2], event[3])))
             t = t.astimezone(utc)
-            print t
             if t > now and (self.nextEvent is None or t < self.nextEvent[1]):
                 self.nextEvent = (event[0], t)
 
