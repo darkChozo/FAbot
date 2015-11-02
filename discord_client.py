@@ -3,6 +3,7 @@ import logging
 import discord
 from commands import commandregex, commands
 from event_manager import event_manager
+from variables_manager import variables_manager
 
 
 class Client(discord.Client):
@@ -38,18 +39,24 @@ def on_message(message):
         if cmdline.group('command') in commands:
             msg = commands[cmdline.group('command')](message, cmdline.group('args'))
             if msg is not None:
-                main_client.send_message(message.channel, msg)
+                variables = variables_manager.get_variables(client=main_client, message=message)
+                main_client.send_message(message.channel, msg.format(**variables))
+
 
 @main_client.event
-def on_member_join(member):
+def on_member_join(server, member):
     if main_client.welcome_pm:
-        main_client.send_message(member, main_client.welcome_pm)
+        variables = variables_manager.get_variables(client=main_client, server=server, user=member)
+        main_client.send_message(member, main_client.welcome_pm.format(**variables))
     if main_client.join_announcement:
         for channel in main_client.announcement_channels:
-            main_client.send_message(main_client.get_channel(channel), main_client.join_announcement)
+            variables = variables_manager.get_variables(client=main_client, server=server, user=member)
+            main_client.send_message(main_client.get_channel(channel), main_client.join_announcement.format(**variables))
+
 
 @main_client.event
-def on_member_remove(member):
+def on_member_remove(server, member):
     if main_client.leave_announcement:
         for channel in main_client.announcement_channels:
-            main_client.send_message(main_client.get_channel(channel), main_client.leave_announcement)
+            variables = variables_manager.get_variables(client=main_client, user=member)
+            main_client.send_message(main_client.get_channel(channel), main_client.leave_announcement.format(**variables))
