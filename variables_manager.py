@@ -5,14 +5,14 @@ class VariablesManager(object):
     def __init__(self):
         pass
 
-    def get_variables(self, client=None, message=None, channel=None, server=None, user=None):
+    def get_variables(self, channel=None, client=None, member=None, message=None, server=None, user=None):
         variables = dict()
 
-        server_name = self.server_name(channel=channel, message=message, server=server)
+        server_name = self.server_name(channel=channel, member=member, message=message, server=server)
         if server_name is not None:
             variables['server_name'] = server_name
 
-        user_name = self.user_name(message=message, user=user)
+        user_name = self.user_name(member=member, message=message, user=user)
         if user_name is not None:
             variables['user_name'] = user_name
 
@@ -23,10 +23,12 @@ class VariablesManager(object):
         return variables
 
     @staticmethod
-    def server_name(channel=None, message=None, server=None):
+    def server_name(channel=None, member=None, message=None, server=None):
         if server is None:
             if channel is not None:
                 server = channel.server
+            elif member is not None:
+                server = member.server
             elif message is not None:
                 server = message.channel.server
             else:
@@ -34,9 +36,11 @@ class VariablesManager(object):
         return server.name
 
     @staticmethod
-    def user_name(message=None, user=None):
+    def user_name(member=None, message=None, user=None):
         if user is None:
-            if message is not None:
+            if member is not None:
+                user = member
+            elif message is not None:
                 user = message.author
             else:
                 return None

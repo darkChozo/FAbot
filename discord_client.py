@@ -46,17 +46,21 @@ def on_message(message):
 @main_client.event
 def on_member_join(server, member):
     if main_client.welcome_pm:
-        variables = variables_manager.get_variables(client=main_client, server=server, user=member)
+        variables = variables_manager.get_variables(client=main_client, member=member)
         main_client.send_message(member, main_client.welcome_pm.format(**variables))
     if main_client.join_announcement:
-        for channel in main_client.announcement_channels:
-            variables = variables_manager.get_variables(client=main_client, server=server, user=member)
-            main_client.send_message(main_client.get_channel(channel), main_client.join_announcement.format(**variables))
+        for channel_number in main_client.announcement_channels:
+            channel = main_client.get_channel(channel_number)
+            if channel.server.id == server.id:
+                variables = variables_manager.get_variables(channel=channel, client=main_client, member=member)
+                main_client.send_message(channel, main_client.join_announcement.format(**variables))
 
 
 @main_client.event
 def on_member_remove(server, member):
     if main_client.leave_announcement:
-        for channel in main_client.announcement_channels:
-            variables = variables_manager.get_variables(client=main_client, user=member)
-            main_client.send_message(main_client.get_channel(channel), main_client.leave_announcement.format(**variables))
+        for channel_number in main_client.announcement_channels:
+            channel = main_client.get_channel(channel_number)
+            if channel.server.id == server.id:
+                variables = variables_manager.get_variables(channel=channel, client=main_client, member=member)
+                main_client.send_message(channel, main_client.leave_announcement.format(**variables))
