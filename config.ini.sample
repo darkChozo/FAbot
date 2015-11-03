@@ -1,11 +1,13 @@
-[Config]
+[Bot Account]
+; Basic credentials for bot to log into Discord
 email:fa_bot@example.com
 password:pass
 
-;;if commented out, channel_whitelist will default to []
+[Config]
+;; if commented out, channel_whitelist will default to []
 ;channel_whitelist:["107862710267453440","108326959460663296"]
 
-;if commented out, announcement_channels will default to []
+;; if commented out, announcement_channels will default to []
 ;announcement_channels:["107862710267453440"]
 
 arma_server_ip:91.121.223.212
@@ -13,9 +15,13 @@ arma_server_port:2703
 insurgency_server_ip:91.121.223.212
 insurgency_server_port:27015
 
-;;if any of these to enable announcement
-;welcome_pm:Hi! Welcome to the $servername, $username!
-;    I am the $botname, and if you want to know more about me, just send
+[Announcements]
+;; Uncomment setting to enable it.
+;; Available variables:
+;; server_name, user_name, bot_name
+;welcome_pm:Hi! Welcome to the {server_name}, {user_name}!
+;    I am {bot_name}, and am a bot on this server.
+;    If you want to know more about me, just send:
 ;    !help
-;join_announcement:$username joined this channel.
-;leave_announcement:$username left this channel.
+;join_announcement:{user_name} joined this channel.
+;leave_announcement:{user_name} left this channel.

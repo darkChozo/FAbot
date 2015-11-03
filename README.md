@@ -32,6 +32,10 @@ python setup.py develop
 Copy file config.ini.sample and rename duplicate to config.ini
 Inside config file, fill out email and password, and if you want to test on your own server, change channels.
 
+### Custom messages
+Section "Announcements" in config let's you enable and customize "user join server" and "user left server" messages.
+You can also enable PM sent to every new user.
+
 # Development
 To add new commands, you'll need to write a new function to do the actual command, taking two arguments:
 - *message* The actual discord message object which contains things like the

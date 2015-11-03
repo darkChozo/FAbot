@@ -4,6 +4,7 @@ from config_manager import ConfigManager
 from discord_client import main_client
 from event_manager import event_manager
 import game_servers
+from variables_manager import variables_manager
 
 
 class FAbot(object):
@@ -18,16 +19,17 @@ class FAbot(object):
         logging.info("Reading configuration")
         config = ConfigManager("config.ini")
 
-        client_email = config.get("email")
-        client_pass = config.get("password")
+        client_email = config.get("email", section="Bot Account")
+        client_pass = config.get("password", section="Bot Account")
         event_manager.announcement_channels = config.get_json("announcement_channels", default=[])
         # TODO: probably event manager should take channels from client instead?
 
         main_client.channel_whitelist = config.get_json("channel_whitelist", default=[])
         main_client.announcement_channels = config.get_json("announcement_channels", default=[])
-        main_client.welcome_pm = config.get("welcome_pm")
-        main_client.join_announcement = config.get("join_announcement")
-        main_client.leave_announcement = config.get("leave_announcement")
+
+        main_client.welcome_pm = config.get("welcome_pm", section="Announcements")
+        main_client.join_announcement = config.get("join_announcement", section="Announcements")
+        main_client.leave_announcement = config.get("leave_announcement", section="Announcements")
 
         # Game servers
         game_servers.game_servers['arma'] = game_servers.ArmaServer(
