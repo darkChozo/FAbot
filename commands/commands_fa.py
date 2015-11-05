@@ -100,6 +100,11 @@ def f3wiki(message, args):
     if args is not None:
         return "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format("+".join(args.split()))
 
+@command('addons')
+def addons(message, args):
+    """!addons : display link to FA optional addons"""
+        return "http://www.folkarps.com/forum/viewtopic.php?f=43&t=1382"
+
 
 @command('test')
 def test(message, args):
