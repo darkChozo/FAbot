@@ -91,19 +91,22 @@ def f3(message, args):
 def biki(message, args):
     """!biki <term> : search the bohemia interactive wiki for <term>"""
     if args is not None:
-        return "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format("+".join(args.split()))
+        return "https://community.bistudio.com/wiki?search={}&title=Special%3ASearch&go=Go".format(
+            "+".join(args.split()))
 
 
 @command('f3wiki')
 def f3wiki(message, args):
     """!f3wiki <term> : search the f3 wiki for <term>"""
     if args is not None:
-        return "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format("+".join(args.split()))
+        return "http://ferstaberinde.com/f3/en//index.php?search={}&title=Special%3ASearch&go=Go".format(
+            "+".join(args.split()))
+
 
 @command('addons')
 def addons(message, args):
     """!addons : display link to FA optional addons"""
-        return "http://www.folkarps.com/forum/viewtopic.php?f=43&t=1382"
+    return "http://www.folkarps.com/forum/viewtopic.php?f=43&t=1382"
 
 
 @command('test')
