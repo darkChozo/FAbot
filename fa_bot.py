@@ -8,6 +8,6 @@ if __name__ == '__main__':
     try:
         fa_bot.start()
     except KeyboardInterrupt:
-        print "Disconnecting... Might take up to 60 seconds because of reasons."  # TODO: These are known reasons.
+        print "Disconnecting..."
         logging.info("Keyboard interrupt. Disconnecting.")
         fa_bot.stop()

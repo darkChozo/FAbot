@@ -3,28 +3,41 @@ import time
 import threading
 import logging
 
-def watchArmaServer(watcher, timeout):
-    """While session is set, check the Arma server every timeout seconds"""
+
+def watch_arma_server(watcher, delay):
+    """
+    While session is set, check the Arma server.
+    :param watcher:
+    :param delay: Time to wait between checks.
+    :return:
+    """
     logging.info('Arma Server watcher thread starting')
     time.sleep(3)
+    start_time = time.time()
     while watcher.session.isSet():
-        gametype, gamestatetext, gamestate = watcher.bot.game_servers['arma'].state()
-        logging.info('Arma server state: %s', gamestatetext)
-        if gamestate!=watcher.armaState:
-            if gamestate == 3:
-                logging.info('Arma server entering slotting state')
-                for channel in watcher.bot.discordClient.announcement_channels:
-                    watcher.bot.discordClient.send_message(watcher.bot.discordClient.get_channel(channel), "Arma server is now slotting for the next mission...")
+        if time.time() - start_time >= delay:
+            start_time = time.time()
+            gametype, gamestatetext, gamestate = watcher.bot.game_servers['arma'].state()
+            logging.info('Arma server state: %s', gamestatetext)
 
+            if gamestate != watcher.armaState:
+                if gamestate == 3:
+                    logging.info('Arma server entering slotting state')
+                    for channel in watcher.bot.discordClient.announcement_channels:
+                        watcher.bot.discordClient.send_message(
+                            watcher.bot.discordClient.get_channel(channel),
+                            "Arma server is now slotting for the next mission..."
+                        )
+                if watcher.armaState == 3:
+                    logging.info('Arma server leaving slotting state')
+                    for channel in watcher.bot.discordClient.announcement_channels:
+                        watcher.bot.discordClient.send_message(
+                            watcher.bot.discordClient.get_channel(channel),
+                            "Slotting for the next mission on the Arma server has closed..."
+                        )
+            watcher.armaState = gamestate
 
-            if watcher.armaState == 3:
-                logging.info('Arma server leaving slotting state')
-                for channel in watcher.bot.discordClient.announcement_channels:
-                    watcher.bot.discordClient.send_message(watcher.bot.discordClient.get_channel(channel), "Slotting for the next mission on the Arma server has closed...")
-
-        watcher.armaState = gamestate
-        logging.info("Waiting {} seconds".format(timeout))
-        time.sleep(timeout)
+        time.sleep(1)
     logging.info('Arma Server watcher thread ending')
 
 
@@ -40,12 +53,13 @@ class Watcher(object):
     def start(self):
         logging.info('Trying to start Arma Server watcher thread')
         self.session.set()
-        self.watcherThread= threading.Thread(name='Watch Arma Server',
-                            target=watchArmaServer,
-                            args=(self, 60))
+        self.watcherThread = threading.Thread(
+            name='Watch Arma Server',
+            target=watch_arma_server,
+            args=(self, 60)
+        )
         self.watcherThread.start()
 
     def stop(self):
         logging.info('Trying to stop Arma Server watcher thread')
         self.session.clear()
-
