@@ -29,12 +29,13 @@ def watchArmaServer(watcher, timeout):
 
 
 class Watcher(object):
-    armaState = 0
-    bot = None
+    armaState = 0  # Why is that static?
+    bot = None  # Why is that static?
 
     def __init__(self, fabot):
         self.bot = fabot
         self.session = threading.Event()
+        self.watcherThread = None
 
     def start(self):
         logging.info('Trying to start Arma Server watcher thread')

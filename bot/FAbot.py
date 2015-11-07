@@ -19,15 +19,17 @@ def command(cmd):
 
 
 class FAbot(object):
-    discordClient = None
-    event_manager = None
-    main_watcher = None
-    game_servers = {}
-    commandregex = re.compile("(?s)^!(?P<command>\w+)\s*(?P<args>.*)?")
-    commands = {}
-    botMethods = ['start']
-
     def __init__(self, configfilename):
+        self.client_email = None
+        self.client_pass = None
+        self.discordClient = None
+        self.event_manager = None
+        self.main_watcher = None
+        self.game_servers = {}
+        self.commandregex = re.compile("(?s)^!(?P<command>\w+)\s*(?P<args>.*)?")
+        self.commands = {}
+        self.botMethods = ['start', 'stop']
+
         # Logging
         logging.basicConfig(filename="logs/FA_bot.log", level=logging.DEBUG,
                             format="%(asctime)-15s %(message)s")
@@ -97,6 +99,12 @@ class FAbot(object):
 
         logging.info("Entering main message event loop")
         self.discordClient.run()
+
+    def stop(self):
+        self.discordClient.logout()
+        if self.event_manager.timer is not None:  # Todo: move that one to event manager? Maybe not needed.
+            self.event_manager.timer.cancel()
+        self.main_watcher.stop()
 
     @command('help')
     def help_cmd(self, message, args):
@@ -246,6 +254,11 @@ class FAbot(object):
                 return "Folk ARPS session underway; FA_bot will announce when we're slotting"
             else:
                 return "No Folk ARPS session running at the moment. Check when the next event is on with !nextevent"
+
+    @command('addons')
+    def addons(self, message, args):
+        """!addons : display link to FA optional addons"""
+        return "http://www.folkarps.com/forum/viewtopic.php?f=43&t=1382"
 
     @command('test')
     def test(self, message, args):
