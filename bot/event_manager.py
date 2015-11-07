@@ -66,15 +66,14 @@ class EventManager(object):
         days, remainder = divmod(td.total_seconds(), 86400)
         hours, remainder = divmod(remainder, 3600)
         minutes, seconds = divmod(remainder, 60)
-        
+
         output = ''
         if days != 0:
             output += '{:.0f}'.format(days) + (' days, ' if days != 1 else ' day, ')
         if days != 0 or hours != 0:
             output += '{:.0f}'.format(hours) + (' hours and ' if hours != 1 else ' hour and ')
         output += '{:.0f}'.format(minutes) + (' minutes' if minutes != 1 else ' minute')
-        
+
         return output
 
 
-event_manager = EventManager()
