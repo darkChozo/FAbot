@@ -6,6 +6,8 @@ import config_manager
 import event_manager
 import game_server
 import watcher
+import requests
+import json
 
 
 def command(cmd):
@@ -267,4 +269,21 @@ class FAbot(object):
             return None
         logging.info('test()')
         msg = self.game_servers['arma'].raw_info() + '\n\n' + self.game_servers['insurgency'].raw_info()
+        return msg
+
+    @command('mission')
+    def mission(self, message, args):
+        # """!mission <missionname> : describe <missionname> or the mission currently being played on the server"""
+        if message is None:
+            return None
+        logging.info('mission(%(args)s)' % {'args': args})
+        print (args)
+        header = {'X-Parse-Application-Id' : '1IijmSndIGJFPg6cw6xDl5PRe5AiGCHliyPzIgPc',
+                'X-Parse-REST-API-Key'   : 'A7n2hKn8S1qiBY3dmSduYl90kskHBi957KXuSqgs',
+                'Content-Type'           : 'application/json'}
+        query = {'where': json.dumps({'missionName' : args})}
+        response = requests.get('https://api.parse.com/1/classes/Missions', headers=header, params=query)
+        print (response.url)
+        msg = response.json()
+        print (msg)
         return msg

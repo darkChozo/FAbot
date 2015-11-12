@@ -33,13 +33,13 @@ class Client(discord.Client):
                              message.author.name, message.content)
             else:
                 logging.info("%s : %s", message.author.name, message.content)
-            cmdline = self.bot.commandregex.search(message.content.lower())
-            logging.debug("Command parsed : %s(%s)", cmdline.group('command'),
+            cmdline = self.bot.commandregex.search(message.content)
+            logging.debug("Command parsed : %s(%s)", cmdline.group('command').lower(),
                           cmdline.group('args'))
-            if cmdline.group('command') in self.bot.commands:
-                msg = self.bot.commands[cmdline.group('command')](self.bot,
-                                                                  message,
-                                                                  cmdline.group('args'))
+            if cmdline.group('command').lower() in self.bot.commands:
+                msg = self.bot.commands[cmdline.group('command').lower()](self.bot,
+                                                                          message,
+                                                                          cmdline.group('args'))
                 if msg is not None:
                     self.send_message(message.channel, msg)
 
