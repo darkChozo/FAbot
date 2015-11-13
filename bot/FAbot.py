@@ -281,9 +281,10 @@ class FAbot(object):
         header = {'X-Parse-Application-Id' : '1IijmSndIGJFPg6cw6xDl5PRe5AiGCHliyPzIgPc',
                 'X-Parse-REST-API-Key'   : 'A7n2hKn8S1qiBY3dmSduYl90kskHBi957KXuSqgs',
                 'Content-Type'           : 'application/json'}
-        query = {'where': json.dumps({'missionName' : args})}
+        query = {'where': json.dumps({'missionName' : { '$regex' : '\Q%s\E' % args, '$options' : 'i'}})}
+        print(query)
         response = requests.get('https://api.parse.com/1/classes/Missions', headers=header, params=query)
-        print (response.url)
+        print(response.url)
         msg = response.json()
-        print (msg)
+        print(msg)
         return msg
