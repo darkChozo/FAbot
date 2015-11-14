@@ -31,6 +31,8 @@ class FAbot(object):
         self.commandregex = re.compile("(?s)^!(?P<command>\w+)\s*(?P<args>.*)?")
         self.commands = {}
         self.botMethods = ['start', 'stop']
+        self.FAMDB_API_key = None
+        self.FAMDB_app_id = None
 
         # Logging
         logging.basicConfig(filename="logs/FA_bot.log", level=logging.DEBUG,
@@ -68,6 +70,10 @@ class FAbot(object):
             ip=self.config.get("insurgency_server_ip"),
             port=int(self.config.get("insurgency_server_port"))
         )
+
+        # FAMDB
+        self.FAMDB_API_key = self.config.get("API_key", section="FAMDB")
+        self.FAMDB_app_id  = self.config.get("application_id", section="FAMDB")
 
         # Discord client
         logging.info("Logging into Discord")
@@ -277,14 +283,55 @@ class FAbot(object):
         if message is None:
             return None
         logging.info('mission(%(args)s)' % {'args': args})
-        print (args)
-        header = {'X-Parse-Application-Id' : '1IijmSndIGJFPg6cw6xDl5PRe5AiGCHliyPzIgPc',
-                'X-Parse-REST-API-Key'   : 'A7n2hKn8S1qiBY3dmSduYl90kskHBi957KXuSqgs',
-                'Content-Type'           : 'application/json'}
+
+        if (args is None) or (not args.strip()):
+            logging.info('No mission name specified, interrogating arma server')
+            servermapname = self.game_servers['arma'].info()['game']
+            regex = re.compile("fa3_[c|a]\w.[0-9]*_(?P<mapname>\w+)[_v[0-9]*]?")
+            logging.info('Server map name: %s' % servermapname)
+            result = regex.search(servermapname)
+            if result.groups is None:
+                logging.info("Didn't recognise the server map name")
+                return "Need a mission name (didn't recognise the one on the server right now)"
+            tokenlist = result.group('mapname').split('_')
+            args = max(tokenlist, key=len)
+            logging.info('Map name tokens : %s',tokenlist)
+            logging.info('Selected search token : %s',args)
+
+        if (args is None) or (not args):
+            logging.info("Didn't recognise the server map name")
+            return "Need a mission name (didn't recognise the one on the server right now)"
+
+        header = {'X-Parse-Application-Id' : self.FAMDB_app_id,
+                  'X-Parse-REST-API-Key'   : self.FAMDB_API_key,
+                  'Content-Type'           : 'application/json'}
+
         query = {'where': json.dumps({'missionName' : { '$regex' : '\Q%s\E' % args, '$options' : 'i'}})}
-        print(query)
+        logging.info('Query: %s' % query)
+
         response = requests.get('https://api.parse.com/1/classes/Missions', headers=header, params=query)
-        print(response.url)
-        msg = response.json()
-        print(msg)
-        return msg
+        logging.info('URL: %s' % response.url)
+
+        result = response.json()
+        bestguess = result['results'][0]
+        logging.info('Response: %s ' % bestguess)
+
+        data = {'servername': servermapname,
+                'name': bestguess[u'missionName'],
+                'type': bestguess[u'missionType'],
+                'map':bestguess[u'missionMap'],
+                'author':bestguess[u'missionAuthor'],
+                'description':bestguess[u'missionDesc']}
+
+        if not servermapname:
+            msg = "**Mission name: {name}**\n"
+        else:
+            msg = "**Mission name: {name}** *({servername})*\n"
+
+        msg = ' '.join( ( msg, "**Mission type:** {type}\n" \
+                        "**Location:** {map}\n" \
+                        "**Author:** {author}\n" \
+                        "**Description:** {description}\n" ) )
+
+        logging.info(msg.format(**data))
+        return msg.format(**data)
