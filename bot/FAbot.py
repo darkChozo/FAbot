@@ -299,10 +299,6 @@ class FAbot(object):
             logging.info('Map name tokens : %s',tokenlist)
             logging.info('Selected search token : %s',args)
 
-        if (args is None) or (not args):
-            logging.info("Didn't recognise the server map name")
-            return "Need a mission name (didn't recognise the one on the server right now)"
-
         header = {'X-Parse-Application-Id' : self.FAMDB_app_id,
                   'X-Parse-REST-API-Key'   : self.FAMDB_API_key,
                   'Content-Type'           : 'application/json'}
@@ -317,8 +313,7 @@ class FAbot(object):
         bestguess = result['results'][0]
         logging.info('Response: %s ' % bestguess)
 
-        data = {'servername': servermapname,
-                'name': bestguess[u'missionName'],
+        data = {'name': bestguess[u'missionName'],
                 'type': bestguess[u'missionType'],
                 'map':bestguess[u'missionMap'],
                 'author':bestguess[u'missionAuthor'],
@@ -328,6 +323,7 @@ class FAbot(object):
             msg = "**Mission name: {name}**\n"
         else:
             msg = "**Mission name: {name}** *({servername})*\n"
+            data['servername']=servermapname
 
         msg = ' '.join( ( msg, "**Mission type:** {type}\n" \
                         "**Location:** {map}\n" \

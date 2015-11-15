@@ -77,4 +77,5 @@ class Client(discord.Client):
     def announce(self, message):
         for channel_number in self.announcement_channels:
             channel = self.get_channel(channel_number)
+            logging.info(' '.join(('-> #', channel.name, ':', message)))
             self.send_message(channel, message)
