@@ -25,3 +25,7 @@ insurgency_server_port:27015
 ;    !help
 ;join_announcement:{user_name} joined this channel.
 ;leave_announcement:{user_name} left this channel.
+
+[FAMDB]
+application_id:1IijmSndIGJFPg6cw6xDl5PRe5AiGCHliyPzIgPc
+API_key:A7n2hKn8S1qiBY3dmSduYl90kskHBi957KXuSqgs

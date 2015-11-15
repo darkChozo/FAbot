@@ -13,6 +13,7 @@ setup(
         'pyOpenSSL',
         'ndg-httpsclient',
         'pyasn1',
+        'requests',
     ],
     url='',
     license='',
