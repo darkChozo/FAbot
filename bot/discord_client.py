@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 import discord
+import os.path
+import os
+import subprocess
 
 
 class Client(discord.Client):
@@ -19,8 +22,19 @@ class Client(discord.Client):
         print('connected!')
         print('username: ' + self.user.name)
         print('id: ' + self.user.id)
-        logging.info("connected to discord as %s (id: %s)",
+        logging.info("Connected to discord as %s (id: %s)",
                      self.user.name, self.user.id)
+
+        msg = "**Bot Online**"
+
+        if os.path.exists('update'):
+            gitlog = subprocess.check_output('git log --decorate=no -n 5 --pretty=oneline --abbrev-commit --graph', shell=True)
+            logging.info(gitlog)
+            msg = ' '.join(("**Restarting after update:**\n```", gitlog, "```"))
+            os.remove('update')
+
+        self.announce(msg)
+
 
     def on_message(self, message):
         self.bot.event_manager.handle_message(self)
@@ -41,6 +55,7 @@ class Client(discord.Client):
                                                                           message,
                                                                           cmdline.group('args'))
                 if msg is not None:
+                    logging.info(' '.join(('-> #', message.channel.name, ':', msg)))
                     self.send_message(message.channel, msg)
 
     def on_member_join(self, server, member):
@@ -58,3 +73,8 @@ class Client(discord.Client):
                 channel = self.get_channel(channel_number)
                 if channel.server.id == server.id:
                     self.send_message(channel, self.leave_announcement)
+
+    def announce(self, message):
+        for channel_number in self.announcement_channels:
+            channel = self.get_channel(channel_number)
+            self.send_message(channel, message)
