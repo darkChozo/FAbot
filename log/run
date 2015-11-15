@@ -1,0 +1,4 @@
+#!/bin/bash
+
+exec 2>&1
+exec setuidgid testfabot multilog t s10485760 n5 '!tai64nlocal' ./FA_bot.log
