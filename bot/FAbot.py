@@ -285,6 +285,8 @@ class FAbot(object):
             return None
         logging.info('mission(%(args)s)' % {'args': args})
 
+        servermapname = None
+
         if (args is None) or (not args.strip()):
             logging.info('No mission name specified, interrogating arma server')
             servermapname = self.game_servers['arma'].info()['game']
