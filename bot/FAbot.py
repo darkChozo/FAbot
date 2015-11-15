@@ -280,7 +280,7 @@ class FAbot(object):
 
     @command('mission')
     def mission(self, message, args):
-        # """!mission <missionname> : describe <missionname> or the mission currently being played on the server"""
+        """!mission <missionname> : describe <missionname> or the mission currently being played on the server"""
         if message is None:
             return None
         logging.info('mission(%(args)s)' % {'args': args})
@@ -339,7 +339,7 @@ class FAbot(object):
 
     @command('update')
     def update(self, message, args):
-        # """!update : tell the bot to get its latest release from github and restart. Permission required."""
+        """!update : tell the bot to get its latest release from github and restart. Permission required."""
         if message is None:
             return None
 
