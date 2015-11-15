@@ -8,7 +8,6 @@ import game_server
 import watcher
 import requests
 import json
-import os.path
 import subprocess
 
 
@@ -83,9 +82,6 @@ class FAbot(object):
 
         self.discordClient.channel_whitelist = self.config.get_json("channel_whitelist", default=[])
         self.discordClient.announcement_channels = self.config.get_json("announcement_channels", default=[])
-        print self.config.get_json("announcement_channels", default=[])
-        print self.discordClient.announcement_channels
-
 
         self.discordClient.welcome_pm = self.config.get("welcome_pm", section="Announcements")
         self.discordClient.join_announcement = self.config.get("join_announcement", section="Announcements")
@@ -350,10 +346,14 @@ class FAbot(object):
         try:
             git_result = subprocess.check_output('git pull', shell=True)
             logging.info(git_result)
+            if (git_result == 'Already up-to-date.'):
+                return git_result
+
             msg = ' '.join(("**Restarting for update:**\n```", git_result, "```"))
             self.discordClient.announce(msg)
             open('update','w').close()
             self.stop()
+
         except subprocess.CalledProcessError as err:
             logging.info(err)
             logging.info(' '.join(('shell: ', err.cmd)))
