@@ -182,6 +182,13 @@ class FAbot(object):
             return None
         return self.server_address("arma_test")
 
+    @command('insurgencyserver')
+    def testserver(self, message, args):
+        """!insurgencyserver : report the hostname and port of the Folk ARPS Insurgency (Standalone) server"""
+        if message is None:
+            return None
+        return self.server_address("insurgency")
+
     @command('tsserver')
     def tsserver(self, message, args):
         """!tsserver : report the hostname and port of the Folk ARPS teamspeak server"""
