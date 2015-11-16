@@ -20,6 +20,7 @@ FAbot Currently allows for the following commands:
 * !f3 - Gives the address to latest f3 framework download
 * !f3wiki *pagename* - Searches the f3 Wiki
 * !biki *pagename* - Searches the Bohemia Interactive Wiki
+* !mission *missionname* - Searches FAMDB for the mission name and reports some of its details; if no mission name is specified, it tries to search for the mission currently running on the server (but this may fail)
 
 # Installation
 If you're using virtualenv (you should) create it in subfolder .venv (it's gitignored).
@@ -27,7 +28,11 @@ To install (it should take care of dependencies):
 ```
 python setup.py develop
 ```
-    
+
+If running as a daemon, this can be run using the daemontools supervisor;
+create a symbolic link for the installation directory in /service (or use
+update-service --add *dirname* on Debian)
+
 # Configuration
 Copy file config.ini.sample and rename duplicate to config.ini
 Inside config file, fill out email and password, and if you want to test on your own server, change channels.
@@ -37,13 +42,17 @@ Section "Announcements" in config let's you enable and customize "user join serv
 You can also enable PM sent to every new user.
 
 # Development
-To add new commands, you'll need to write a new function to do the actual command, taking two arguments:
+To add new commands, you'll need to write a new method in FAbot.py to do the actual command, taking three arguments:
+- *self*
 - *message* The actual discord message object which contains things like the
     channel, the author, the content and so on; and
 - *args* Any arguments that follow the actual command itself (so in _"!foo bar"_,
     args would be 'bar'
-    
+
 Your function must return String, that will be sent as a response, or return nothing.
+
+You *must* test *message* at the very start of your method and return None
+immediately if *message* is None.
 
 If you want your function to show up once someone writes _!help_,
 in the first line of the function write documentation for it. Documentation is just a line of text
@@ -52,14 +61,14 @@ starting and ending with *"""*. Keep it formatted like documentation of other fu
 Once your function is written, you must add @command decorator to it.
 Just write @decorator('command') before it's declared.
 
-Save that file to folder *commands*. If you want to create new file inside that folder, you'll need to import it.
-Open file commands/__init__.py and append code `import filename`
+Example of new method:
 
-Example of new function:
-
-``` 
+```
 @command("foo")
-def bar(message, args):
+def bar(self, message, args):
     """!foo : display bar"""
-    client.send_message(message.channel, "bar")
+    if message is None:
+        return None
+
+    return "bar"
 ```

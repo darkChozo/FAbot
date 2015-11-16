@@ -8,6 +8,7 @@ import game_server
 import watcher
 import requests
 import json
+import subprocess
 
 
 def command(cmd):
@@ -35,7 +36,7 @@ class FAbot(object):
         self.FAMDB_app_id = None
 
         # Logging
-        logging.basicConfig(filename="logs/FA_bot.log", level=logging.DEBUG,
+        logging.basicConfig(filename="log/FA_bot.log", level=logging.DEBUG,
                             format="%(asctime)-15s %(message)s")
         logging.info("FAbot starting up")
         logging.info("Registering commands: ")
@@ -279,10 +280,12 @@ class FAbot(object):
 
     @command('mission')
     def mission(self, message, args):
-        # """!mission <missionname> : describe <missionname> or the mission currently being played on the server"""
+        """!mission <missionname> : describe <missionname> or the mission currently being played on the server"""
         if message is None:
             return None
         logging.info('mission(%(args)s)' % {'args': args})
+
+        servermapname = None
 
         if (args is None) or (not args.strip()):
             logging.info('No mission name specified, interrogating arma server')
@@ -298,10 +301,6 @@ class FAbot(object):
             logging.info('Map name tokens : %s',tokenlist)
             logging.info('Selected search token : %s',args)
 
-        if (args is None) or (not args):
-            logging.info("Didn't recognise the server map name")
-            return "Need a mission name (didn't recognise the one on the server right now)"
-
         header = {'X-Parse-Application-Id' : self.FAMDB_app_id,
                   'X-Parse-REST-API-Key'   : self.FAMDB_API_key,
                   'Content-Type'           : 'application/json'}
@@ -316,8 +315,7 @@ class FAbot(object):
         bestguess = result['results'][0]
         logging.info('Response: %s ' % bestguess)
 
-        data = {'servername': servermapname,
-                'name': bestguess[u'missionName'],
+        data = {'name': bestguess[u'missionName'],
                 'type': bestguess[u'missionType'],
                 'map':bestguess[u'missionMap'],
                 'author':bestguess[u'missionAuthor'],
@@ -327,6 +325,7 @@ class FAbot(object):
             msg = "**Mission name: {name}**\n"
         else:
             msg = "**Mission name: {name}** *({servername})*\n"
+            data['servername']=servermapname
 
         msg = ' '.join( ( msg, "**Mission type:** {type}\n" \
                         "**Location:** {map}\n" \
@@ -335,3 +334,27 @@ class FAbot(object):
 
         logging.info(msg.format(**data))
         return msg.format(**data)
+
+    @command('update')
+    def update(self, message, args):
+        """!update : tell the bot to get its latest release from github and restart. Permission required."""
+        if message is None:
+            return None
+
+        try:
+            git_result = subprocess.check_output('git pull', shell=True)
+            logging.info(git_result)
+            if (git_result == 'Already up-to-date.'):
+                return git_result
+
+            msg = ' '.join(("**Restarting for update:**\n```", git_result, "```"))
+            self.discordClient.announce(msg)
+            open('update','w').close()
+            self.stop()
+
+        except subprocess.CalledProcessError as err:
+            logging.info(err)
+            logging.info(' '.join(('shell: ', err.cmd)))
+            logging.info(' '.join(('output:', err.output)))
+            msg = ' '.join(('**Update failed:** ',str(err)))
+            return msg

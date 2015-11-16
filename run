@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec setuidgid testfabot ./fa_bot.py
