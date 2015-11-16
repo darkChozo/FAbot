@@ -166,7 +166,7 @@ class FAbot(object):
             steam_url = "steam://connect/{}:{}/".format(server.ip, server.port + 1)  # Steamworks port is one higher
             if server.password is not None:
                 steam_url = "{}{}".format(steam_url, server.password)
-            return "{}{}\nOr just use this link:\n{}".format(address_msg, password_msg, steam_url)
+            return "{}{}\nOr just use this link:\n<{}>".format(address_msg, password_msg, steam_url)
 
     @command('armaserver')
     def armaserver(self, message, args):
