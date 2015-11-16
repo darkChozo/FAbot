@@ -10,10 +10,18 @@ password:pass
 ;; if commented out, announcement_channels will default to []
 ;announcement_channels:["107862710267453440"]
 
+; Use normal port numbers, app will add 1 for steamworks purposes.
+; If there's not password, bot will not show it.
 arma_server_ip:91.121.223.212
-arma_server_port:2703
+arma_server_port:2702
+arma_server_password:freedom
+
+arma_test_server_ip:91.121.223.212
+arma_test_server_port:2722
+arma_test_server_password:freedom
+
 insurgency_server_ip:91.121.223.212
-insurgency_server_port:27015
+insurgency_server_port:27014
 
 [Announcements]
 ;; Uncomment setting to enable it.

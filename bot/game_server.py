@@ -2,13 +2,21 @@
 import string
 import valve.source.a2s
 import re
+import logging
 
 
 class GameServer(object):
-    server = None
+    def __init__(self, ip, port, password=None):
+        self.ip = ip
+        try:
+            self.port = int(port)  # Port number cannot be string
+        except TypeError:
+            logging.error("Cannot parse port number!")
+            raise Exception("Cannot parse port number from value {}".format(port))
+        self.password = password
 
-    def __init__(self, ip, port):
-        self.server = valve.source.a2s.ServerQuerier((ip, port))
+        # Steamworks port should be one number higher than normal port
+        self.server = valve.source.a2s.ServerQuerier((self.ip, self.port + 1))
 
     def players(self):
         return self.server.get_players()
@@ -42,8 +50,8 @@ class ArmaServer(GameServer):
         14: "Playing"
     }
 
-    def __init__(self, ip, port):
-        super(ArmaServer, self).__init__(ip, port)
+    def __init__(self, ip, port, password=None):
+        super(ArmaServer, self).__init__(ip, port, password)
 
     def state(self):
         # python-valve doesn't support the extended data field in the info
@@ -64,8 +72,8 @@ class ArmaServer(GameServer):
 
 
 class InsurgencyServer(GameServer):
-    def __init__(self, ip, port):
-        super(InsurgencyServer, self).__init__(ip, port)
+    def __init__(self, ip, port, password=None):
+        super(InsurgencyServer, self).__init__(ip, port, password)
 
     def state(self):
         # python-valve doesn't support the extended data field in the info
