@@ -30,7 +30,7 @@ class FAbot(object):
         self.game_servers = {}
         self.commandregex = re.compile("(?s)^!(?P<command>\w+)\s*(?P<args>.*)?")
         self.commands = {}
-        self.botMethods = ['start', 'stop']
+        self.botMethods = ['start', 'stop', 'server_address']  # Bob: now I hate it even more...
         self.FAMDB_API_key = None
         self.FAMDB_app_id = None
 
@@ -62,13 +62,21 @@ class FAbot(object):
         # TODO: probably event manager should take channels from client instead?
 
         # Game servers
+        # see how regular this names are, it's asking for the loop
         self.game_servers['arma'] = game_server.ArmaServer(
             ip=self.config.get("arma_server_ip"),
-            port=int(self.config.get("arma_server_port"))
+            port=self.config.get("arma_server_port"),
+            password=self.config.get("arma_server_password")
+        )
+        self.game_servers['arma_test'] = game_server.ArmaServer(
+            ip=self.config.get("arma_test_server_ip"),
+            port=self.config.get("arma_test_server_port"),
+            password=self.config.get("arma_test_server_password")
         )
         self.game_servers['insurgency'] = game_server.InsurgencyServer(
             ip=self.config.get("insurgency_server_ip"),
-            port=int(self.config.get("insurgency_server_port"))
+            port=self.config.get("insurgency_server_port"),
+            password=self.config.get("insurgency_server_password")
         )
 
         # FAMDB
@@ -149,19 +157,29 @@ class FAbot(object):
             return None
         return self.event_manager.next_event_message()
 
+    def server_address(self, server_name):
+        if server_name in self.game_servers:
+            server = self.game_servers[server_name]
+            address_msg = "Address:  **{}**, Port: **{}**".format(server.ip, server.port)
+            password_msg = "\nPassword: **{}**".format(server.password) if server.password is not None else ""
+            steam_url = "steam://connect/{}:{}/".format(server.ip, server.port + 1)  # Steamworks port is one higher
+            if server.password is not None:
+                steam_url = "{}{}".format(steam_url, server.password)
+            return "{}{}\nOr just use this link:\n{}".format(address_msg, password_msg, steam_url)
+
     @command('armaserver')
     def armaserver(self, message, args):
         """!armaserver : report the hostname and port of the Folk ARPS Arma server"""
         if message is None:
             return None
-        return "server.folkarps.com:2702"
+        return self.server_address("arma")
 
     @command('testserver')
     def testserver(self, message, args):
         """!testserver : report the hostname and port of the Folk ARPS mission testing Arma server"""
         if message is None:
             return None
-        return "server.folkarps.com:2722"
+        return self.server_address("arma_test")
 
     @command('tsserver')
     def tsserver(self, message, args):
