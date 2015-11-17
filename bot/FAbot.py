@@ -34,6 +34,8 @@ class FAbot(object):
         self.botMethods = ['start', 'stop', 'server_address']  # Bob: now I hate it even more...
         self.FAMDB_API_key = None
         self.FAMDB_app_id = None
+        self.TS3_address = None
+        self.TS3_port = None
 
         # Logging
         logging.basicConfig(filename="log/FA_bot.log", level=logging.DEBUG,
@@ -65,20 +67,24 @@ class FAbot(object):
         # Game servers
         # see how regular this names are, it's asking for the loop
         self.game_servers['arma'] = game_server.ArmaServer(
-            ip=self.config.get("arma_server_ip"),
-            port=self.config.get("arma_server_port"),
-            password=self.config.get("arma_server_password")
+            ip=self.config.get("arma_server_ip", section="Game Servers"),
+            port=self.config.get("arma_server_port", section="Game Servers"),
+            password=self.config.get("arma_server_password", section="Game Servers")
         )
         self.game_servers['arma_test'] = game_server.ArmaServer(
-            ip=self.config.get("arma_test_server_ip"),
-            port=self.config.get("arma_test_server_port"),
-            password=self.config.get("arma_test_server_password")
+            ip=self.config.get("arma_test_server_ip", section="Game Servers"),
+            port=self.config.get("arma_test_server_port", section="Game Servers"),
+            password=self.config.get("arma_test_server_password", section="Game Servers")
         )
         self.game_servers['insurgency'] = game_server.InsurgencyServer(
-            ip=self.config.get("insurgency_server_ip"),
-            port=self.config.get("insurgency_server_port"),
-            password=self.config.get("insurgency_server_password")
+            ip=self.config.get("insurgency_server_ip", section="Game Servers"),
+            port=self.config.get("insurgency_server_port", section="Game Servers"),
+            password=self.config.get("insurgency_server_password", section="Game Servers")
         )
+
+        # TS3
+        self.TS3_address = self.config.get("teamspeak_server_ip", section="Communication Servers")
+        self.TS3_port = self.config.get("teamspeak_server_port", section="Communication Servers")
 
         # FAMDB
         self.FAMDB_API_key = self.config.get("API_key", section="FAMDB")
@@ -194,7 +200,13 @@ class FAbot(object):
         """!tsserver : report the hostname and port of the Folk ARPS teamspeak server"""
         if message is None:
             return None
-        return "server.folkarps.com:9988"
+        if not self.TS3_address or not self.TS3_port:
+            return "I don't know about any TS3 Server."
+
+        ts3_link = "ts3server://{}/?port={}&nickname=Web%20Guest".format(self.TS3_address, self.TS3_port)
+        msg = "Our Teamspeak server address: **{}:{}**\nOr you can just click this link:<{}>".format(
+            self.TS3_address, self.TS3_port, ts3_link)
+        return msg
 
     @command('ping')
     def ping(self, message, args):
