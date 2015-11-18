@@ -9,6 +9,7 @@ import watcher
 import requests
 import json
 import subprocess
+from urllib import quote
 
 
 def command(cmd):
@@ -36,6 +37,7 @@ class FAbot(object):
         self.FAMDB_app_id = None
         self.TS3_address = None
         self.TS3_port = None
+        self.TS3_password = None
 
         # Logging
         logging.basicConfig(filename="log/FA_bot.log", level=logging.DEBUG,
@@ -85,6 +87,7 @@ class FAbot(object):
         # TS3
         self.TS3_address = self.config.get("teamspeak_server_ip", section="Communication Servers")
         self.TS3_port = self.config.get("teamspeak_server_port", section="Communication Servers")
+        self.TS3_password = self.config.get("teamspeak_server_password", section="Communication Servers")
 
         # FAMDB
         self.FAMDB_API_key = self.config.get("API_key", section="FAMDB")
@@ -203,9 +206,17 @@ class FAbot(object):
         if not self.TS3_address or not self.TS3_port:
             return "I don't know about any TS3 Server."
 
-        ts3_link = "ts3server://{}/?port={}&nickname=Web%20Guest".format(self.TS3_address, self.TS3_port)
-        msg = "Our Teamspeak server address: **{}:{}**\nOr you can just click this link:<{}>".format(
-            self.TS3_address, self.TS3_port, ts3_link)
+        # nickname = "&nickname={}".format(quote(message.author.name))
+        nickname = ""
+
+        ts3_link = "ts3server://{}/?port={}{}".format(self.TS3_address, self.TS3_port, nickname)
+        password_text = ""
+        if self.TS3_password is not None:
+            ts3_link = "{}&password={}".format(ts3_link, self.TS3_password)
+            password_text = " Password: **{}**".format(self.TS3_password)
+
+        msg = "Our Teamspeak server:\nAddress: **{}:{}**{}\nOr you can just click this link:\n<{}>".format(
+            self.TS3_address, self.TS3_port, password_text, ts3_link)
         return msg
 
     @command('ping')
