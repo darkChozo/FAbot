@@ -10,8 +10,14 @@ password:pass
 ;; if commented out, announcement_channels will default to []
 ;announcement_channels:["107862710267453440"]
 
+[Communication Servers]
+teamspeak_server_ip:server.folkarps.com
+teamspeak_server_port:9988
+teamspeak_server_password:freedom
+
+[Game Servers]
 ; Use normal port numbers, app will add 1 for steamworks purposes.
-; If there's not password, bot will not show it.
+; If there's no password, bot will not show it.
 arma_server_ip:91.121.223.212
 arma_server_port:2702
 arma_server_password:freedom
