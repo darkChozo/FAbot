@@ -2,7 +2,6 @@
 import datetime
 from pytz import utc, timezone
 import threading
-import logging
 
 
 class EventManager(object):
@@ -23,10 +22,6 @@ class EventManager(object):
         self.timer = None
         self.announcement_channels = []
 
-    def stop(self):
-        if self.timer is not None:
-            self.timer.cancel();
-
     def handle_message(self, cli):
         if self.timer is None:
             self.find_next_event()
@@ -38,11 +33,11 @@ class EventManager(object):
                         self.timer = threading.Timer(seconds, self.handle_timer,
                                                      args=[cli, "@everyone " + self.nextEvent[0] + warning[0]])
                         self.timer.start()
-                        logging.info("created " + str(seconds) + "s timer for " + str(self.nextEvent))
+                        print "created " + str(seconds) + "s timer for " + str(self.nextEvent)
                         break
 
     def handle_timer(self, cli, message):
-        logging.info("timer complete, printing """ + message + '"')
+        print "timer complete, printing """ + message + '"'
         self.timer = None
         for channel in self.announcement_channels:
             cli.send_message(cli.get_channel(channel), message)
