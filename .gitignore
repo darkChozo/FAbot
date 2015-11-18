@@ -1,6 +1,6 @@
 config.ini
 config.ini.md
-logs/FA_bot.log
+log
 .ropeproject
 .venv/
 .idea/
