@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 import logging
 import re
-import discord_client
+import discord
 import config_manager
 import event_manager
 import game_server
@@ -9,8 +9,7 @@ import watcher
 import requests
 import json
 import subprocess
-from urllib import quote
-
+import os.path
 
 def command(cmd):
     """When you write a new command, add this decorator to it, so it gets registered"""
@@ -22,22 +21,28 @@ def command(cmd):
     return outerwrap
 
 
-class FAbot(object):
+class FAbot(discord.Client):
     def __init__(self, configfilename):
+        super(FAbot, self).__init__()
+
         self.client_email = None
         self.client_pass = None
-        self.discordClient = None
         self.event_manager = None
         self.main_watcher = None
         self.game_servers = {}
         self.commandregex = re.compile("(?s)^!(?P<command>\w+)\s*(?P<args>.*)?")
         self.commands = {}
-        self.botMethods = ['start', 'stop', 'server_address']  # Bob: now I hate it even more...
+        self.botMethods = ['start', 'stop', 'server_address', 'announce']  # Bob: now I hate it even more...
         self.FAMDB_API_key = None
         self.FAMDB_app_id = None
         self.TS3_address = None
         self.TS3_port = None
         self.TS3_password = None
+        self.channel_whitelist = []
+        self.announcement_channels = []
+        self.welcome_pm = None
+        self.join_announcement = None
+        self.leave_announcement = None
 
         # Logging
         logging.basicConfig(filename="log/FA_bot.log", level=logging.DEBUG,
@@ -45,8 +50,8 @@ class FAbot(object):
         logging.info("FAbot starting up")
         logging.info("Registering commands: ")
         for method in dir(self):
-            if callable(getattr(self, method)):
-                if method[:2] != '__' and method not in self.botMethods:
+            if method[:1] != '_' and method[:3] != 'on_' and method not in self.botMethods and method not in dir(discord.Client):
+                if callable(getattr(self, method)):
                     call = getattr(self, method)
                     call(None, None)
                     logging.info(method)
@@ -57,6 +62,7 @@ class FAbot(object):
         # Configuration file
         logging.info("Reading configuration")
         self.config = config_manager.ConfigManager(configfilename)
+
 
     def start(self):
         self.event_manager = event_manager.EventManager()
@@ -95,14 +101,12 @@ class FAbot(object):
 
         # Discord client
         logging.info("Logging into Discord")
-        self.discordClient = discord_client.Client(self)
 
-        self.discordClient.channel_whitelist = self.config.get_json("channel_whitelist", default=[])
-        self.discordClient.announcement_channels = self.config.get_json("announcement_channels", default=[])
-
-        self.discordClient.welcome_pm = self.config.get("welcome_pm", section="Announcements")
-        self.discordClient.join_announcement = self.config.get("join_announcement", section="Announcements")
-        self.discordClient.leave_announcement = self.config.get("leave_announcement", section="Announcements")
+        self.channel_whitelist = self.config.get_json("channel_whitelist", default=[])
+        self.announcement_channels = self.config.get_json("announcement_channels", default=[])
+        self.welcome_pm = self.config.get("welcome_pm", section="Announcements")
+        self.join_announcement = self.config.get("join_announcement", section="Announcements")
+        self.leave_announcement = self.config.get("leave_announcement", section="Announcements")
 
         self.client_email = self.config.get("email", section="Bot Account")
         self.client_pass = self.config.get("password", section="Bot Account")
@@ -113,9 +117,9 @@ class FAbot(object):
             print("Could not find Discord authentication details.")
             exit(1)
 
-        self.discordClient.login(self.client_email, self.client_pass)
+        self.login(self.client_email, self.client_pass)
 
-        if not self.discordClient.is_logged_in:
+        if not self.is_logged_in:
             logging.critical("Logging into Discord failed")
             print('Logging in to Discord failed')
             exit(1)
@@ -124,13 +128,75 @@ class FAbot(object):
         self.main_watcher.start()
 
         logging.info("Entering main message event loop")
-        self.discordClient.run()
+        self.run()
 
     def stop(self):
-        self.discordClient.logout()
+        self.logout()
         if self.event_manager.timer is not None:  # Todo: move that one to event manager? Maybe not needed.
             self.event_manager.timer.cancel()
         self.main_watcher.stop()
+
+    def on_ready(self):
+        print('connected!')
+        print('username: ' + self.user.name)
+        print('id: ' + self.user.id)
+        logging.info("Connected to discord as %s (id: %s)",
+                     self.user.name, self.user.id)
+
+        msg = "**Bot Online**"
+
+        if os.path.exists('update'):
+            gitlog = subprocess.check_output('git log --decorate=no -n 5 --pretty=oneline --abbrev-commit --graph', shell=True)
+            logging.info(gitlog)
+            msg = ' '.join(("**Restarting after update:**\n```", gitlog, "```"))
+            os.remove('update')
+
+        self.announce(msg)
+
+
+    def on_message(self, message):
+        self.event_manager.handle_message(self)
+        if message.content[0] == "!":
+            if (len(self.channel_whitelist) > 0 and
+                    message.channel.id not in self.channel_whitelist):
+                return
+            if not message.channel.is_private:
+                logging.info("#%s (%s) : %s", message.channel.name,
+                             message.author.name, message.content)
+            else:
+                logging.info("%s : %s", message.author.name, message.content)
+            cmdline = self.commandregex.search(message.content)
+            logging.debug("Command parsed : %s(%s)", cmdline.group('command').lower(),
+                          cmdline.group('args'))
+            if cmdline.group('command').lower() in self.commands:
+                msg = self.commands[cmdline.group('command').lower()](self,
+                                                                      message,
+                                                                      cmdline.group('args'))
+                if msg is not None:
+                    logging.info(' '.join(('-> #', message.channel.name, ':', msg)))
+                    self.send_message(message.channel, msg)
+
+    def on_member_join(self, server, member):
+        if self.welcome_pm:
+            self.send_message(member, self.welcome_pm)
+        if self.join_announcement:
+            for channel_number in self.announcement_channels:
+                channel = self.get_channel(channel_number)
+                if channel.server.id == server.id:
+                    self.send_message(channel, self.join_announcement)
+
+    def on_member_remove(self, server, member):
+        if self.leave_announcement:
+            for channel_number in self.announcement_channels:
+                channel = self.get_channel(channel_number)
+                if channel.server.id == server.id:
+                    self.send_message(channel, self.leave_announcement)
+
+    def announce(self, message):
+        for channel_number in self.announcement_channels:
+            channel = self.get_channel(channel_number)
+            logging.info(' '.join(('-> #', channel.name, ':', message)))
+            self.send_message(channel, message)
 
     @command('help')
     def help_cmd(self, message, args):

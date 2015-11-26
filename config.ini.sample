@@ -4,6 +4,10 @@ email:fa_bot@example.com
 password:pass
 
 [Config]
+;; if commented out, console_channel will default to [] 
+;; this will limit functionality for commands like !update
+console_channel:[""]
+
 ;; if commented out, channel_whitelist will default to []
 ;channel_whitelist:["107862710267453440","108326959460663296"]
 
